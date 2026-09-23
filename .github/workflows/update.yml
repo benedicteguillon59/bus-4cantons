@@ -1,0 +1,40 @@
+name: Mise à jour des horaires et publication
+
+on:
+  schedule:
+    - cron: "17 3 * * *"      # chaque jour vers 4 h (heure de Paris)
+  workflow_dispatch:           # bouton « Run workflow » manuel
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Régénérer data.json depuis le GTFS Ilévia
+        run: python build_data.py
+      - name: Enregistrer data.json s'il a changé
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add data.json
+          git diff --cached --quiet || git commit -m "Mise à jour des horaires"
+          git push || true
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - uses: actions/deploy-pages@v4
