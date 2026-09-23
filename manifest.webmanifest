@@ -1,0 +1,17 @@
+{
+  "name": "Bus 4 Cantons",
+  "short_name": "Bus 4 Cantons",
+  "description": "Prochains bus entre Bouvines / Tournebride et 4 Cantons (lignes 854 et 870)",
+  "lang": "fr",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#00427a",
+  "theme_color": "#00427a",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

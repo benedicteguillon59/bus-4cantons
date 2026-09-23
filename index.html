@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bus 4 Cantons</title>
+<meta name="theme-color" content="#00427a">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<style>
+  :root {
+    --bg:#f2f5f9; --card:#fff; --text:#16202b; --muted:#65727f; --line:#e1e7ee;
+    --brand:#00427a; --brand-text:#fff; --ok:#1a7f37; --late:#c2410c; --warn-bg:#fff4d6; --warn-text:#6b4e00;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0e141b; --card:#18212b; --text:#e8eef4; --muted:#93a1af; --line:#26313d;
+            --brand:#4da3ff; --brand-text:#06213b; --ok:#4ade80; --late:#fb923c; --warn-bg:#3a2f0b; --warn-text:#f5d77a; }
+  }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0; background:var(--bg); color:var(--text);
+    font:16px/1.35 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  body { padding:0 0 env(safe-area-inset-bottom); min-height:100vh; }
+  header { position:sticky; top:0; z-index:5; background:var(--bg); padding:12px 16px 10px; border-bottom:1px solid var(--line); }
+  h1 { font-size:1.05rem; margin:0 0 10px; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  h1 small { font-weight:400; color:var(--muted); font-size:.8rem; }
+  .tabs { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .tabs button { border:2px solid var(--line); background:var(--card); color:var(--text); border-radius:14px;
+    padding:12px 8px; font:inherit; font-weight:600; line-height:1.2; }
+  .tabs button small { display:block; font-weight:400; color:var(--muted); font-size:.75rem; margin-top:2px; }
+  .tabs button[aria-pressed="true"] { background:var(--brand); border-color:var(--brand); color:var(--brand-text); }
+  .tabs button[aria-pressed="true"] small { color:inherit; opacity:.85; }
+  main { padding:12px 16px 24px; max-width:640px; margin:0 auto; }
+  .notice { background:var(--warn-bg); color:var(--warn-text); border-radius:12px; padding:10px 12px; margin:0 0 12px; font-size:.88rem; }
+  ul { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; }
+  li { background:var(--card); border-radius:16px; padding:12px 14px; display:grid; grid-template-columns:auto 1fr auto; gap:4px 12px; align-items:center;
+       box-shadow:0 1px 2px rgba(0,0,0,.06); }
+  .badge { min-width:44px; text-align:center; padding:6px 8px; border-radius:10px; font-weight:800; font-size:1.05rem; }
+  .place { font-weight:600; }
+  .sub { color:var(--muted); font-size:1rem; grid-column:1 / -1; border-top:1px solid var(--line); padding-top:8px; margin-top:4px; }
+  .sub b { color:var(--text); font-size:1.15rem; font-weight:700; }
+  .nw { white-space:nowrap; }
+  .sub small { font-size:.82rem; }
+  .when { text-align:right; }
+  .mins { font-size:1.5rem; font-weight:800; line-height:1; }
+  .clock { color:var(--muted); font-size:.85rem; margin-top:2px; white-space:nowrap; }
+    .late { color:var(--late); font-weight:600; }
+  .tag { display:inline-block; font-size:.72rem; font-weight:700; padding:1px 7px; border-radius:99px; border:1px solid currentColor; margin-left:4px; vertical-align:1px; }
+  .when-bar { margin-top:10px; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .when-bar button { border:2px solid var(--line); background:var(--card); color:var(--text); border-radius:12px; padding:8px 12px; font:inherit; font-size:.9rem; font-weight:600; }
+  .when-bar button[aria-pressed="true"] { border-color:var(--brand); color:var(--brand); }
+  .when-bar input { border:2px solid var(--line); background:var(--card); color:var(--text); border-radius:12px; padding:7px 8px; font:inherit; font-size:1rem; min-width:0; }
+  #custom { display:none; gap:8px; flex:1 1 100%; }
+  #custom.on { display:flex; }
+  #custom input[type=date] { flex:1 1 55%; } #custom input[type=time] { flex:1 1 35%; }
+  .empty { text-align:center; color:var(--muted); padding:40px 0; }
+  footer { text-align:center; color:var(--muted); font-size:.78rem; padding:0 16px 24px; }
+  footer button { font:inherit; color:var(--brand); background:none; border:0; text-decoration:underline; padding:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1><span>Prochains bus</span><small id="status">chargement…</small></h1>
+  <div class="tabs" role="group" aria-label="Sens du trajet">
+    <button id="tab-to"   aria-pressed="true">Bouvines / Tournebride<small>→ 4 Cantons</small></button>
+    <button id="tab-from" aria-pressed="false">4 Cantons<small>→ Bouvines / Tournebride</small></button>
+  </div>
+  <div class="when-bar">
+    <button id="btn-now" aria-pressed="true">Maintenant</button>
+    <button id="btn-custom" aria-pressed="false">Autre jour / heure…</button>
+    <div id="custom"><input type="date" id="in-date" aria-label="Jour"><input type="time" id="in-time" aria-label="Heure"></div>
+  </div>
+</header>
+<main>
+  <div id="notice"></div>
+  <ul id="list"></ul>
+</main>
+<footer>
+  Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
+  <button id="refresh">Actualiser</button>
+</footer>
+
+<script>
+"use strict";
+const MAX_ITEMS = 8;
+const $ = id => document.getElementById(id);
+
+let DATA = null;            // horaires (data.json)
+let dir = (() => { try { return localStorage.getItem("dir") === "from" ? "from" : "to"; } catch (e) { return "to"; } })();
+const serviceSets = new Map();
+let custom = false;         // false = maintenant, true = jour/heure choisis
+
+async function loadSchedule() {
+  const r = await fetch("data.json", { cache: "no-cache" });
+  if (!r.ok) throw new Error("data.json " + r.status);
+  DATA = await r.json();
+  serviceSets.clear();
+  for (const [k, v] of Object.entries(DATA.services)) serviceSets.set(k, new Set(v));
+}
+
+const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
+const at = (day, secs) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, secs).getTime();
+
+function upcoming(now) {
+  const out = [];
+  const list = DATA.items[dir];
+  for (let off = -1; off <= 8; off++) {           // veille (courses après minuit) jusqu'à 8 jours plus tard
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+    const key = ymd(day);
+    for (const it of list) {
+      const set = serviceSets.get(it.s);
+      if (!set || !set.has(key)) continue;
+      const t = at(day, it.d);
+      if (t < now.getTime() - (custom ? 0 : 30e3)) continue;
+      out.push({ it, t, dst: it.dst.map(([p, s]) => [DATA.places[p], at(day, s)]) });
+    }
+  }
+  out.sort((a, b) => a.t - b.t);
+  return out.slice(0, MAX_ITEMS);
+}
+
+const hhmm = ms => new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const cap = s => s.split(" - ")[0].toLowerCase().replace(/(^|[ '-])(\S)/g, (m, a, b) => a + b.toUpperCase());  // "MOUCHIN - Place" -> "Mouchin"
+
+function render() {
+  if (!DATA) return;
+  const now = refTime();
+  const real = new Date();
+  $("tab-to").setAttribute("aria-pressed", dir === "to");
+  $("tab-from").setAttribute("aria-pressed", dir === "from");
+
+  const notices = [];
+  if (ymd(now) > DATA.validTo) notices.push("Les horaires enregistrés sont périmés : ouvrez l'appli avec du réseau pour les mettre à jour.");
+  notices.push("Horaires théoriques (pas de temps réel sur les lignes 854 et 870).");
+  $("notice").innerHTML = notices.map(n => `<div class="notice">${n}</div>`).join("");
+
+  const rows = upcoming(now);
+  if (!rows.length) {
+    $("list").innerHTML = `<li class="empty" style="display:block">Aucun passage prévu prochainement.</li>`;
+  } else {
+    $("list").innerHTML = rows.map(({ it, t, dst }) => {
+      const r = DATA.routes[it.r] || { n: it.r, c: "555555", t: "FFFFFF" };
+      const mins = Math.max(0, Math.round((t - real.getTime()) / 60000));
+      const wait = mins === 0 ? "maintenant" : mins < 60 ? "dans " + mins + " min" : mins < 1440 ? "dans " + Math.floor(mins / 60) + " h " + String(mins % 60).padStart(2, "0") : "";
+      const dd = Math.round((new Date(t).setHours(0,0,0,0) - new Date(real).setHours(0,0,0,0)) / 864e5);
+      const dayTxt = dd === 0 ? "" : dd === 1 ? "demain" : new Date(t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+      const arrive = dst.map(([n, ms]) => `<span class="nw">${esc(n)} <b>${hhmm(ms)}</b></span>`).join("<br>");
+      const towards = dir === "from" ? `<br><small>Direction ${esc(cap(it.h))}</small>` : "";
+      return `<li>
+        <div class="badge" style="background:#${r.c};color:#${r.t}">${esc(r.n)}</div>
+        <div class="place">${esc(DATA.places[it.p])}</div>
+        <div class="when"><div class="mins">${hhmm(t)}</div><div class="clock">${[dayTxt, wait].filter(Boolean).join(" · ")}</div></div>
+        <div class="sub"><span class="nw">Arrivée :</span> ${dst.length > 1 ? "<br>" : ""}${arrive}${towards}</div>
+      </li>`;
+    }).join("");
+  }
+  $("status").textContent = custom ? "à partir du " + now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " " + hhmm(now.getTime()) : "mis à jour " + hhmm(real.getTime());
+}
+
+const pad = n => String(n).padStart(2, "0");
+function refTime() {
+  if (!custom) return new Date();
+  const d = $("in-date").value, t = $("in-time").value;
+  if (!d) return new Date();
+  const [y, m, dd] = d.split("-").map(Number), [h, mi] = (t || "00:00").split(":").map(Number);
+  return new Date(y, m - 1, dd, h, mi, 0);
+}
+function setCustom(on) {
+  custom = on;
+  if (on && !$("in-date").value) {
+    const n = new Date();
+    $("in-date").value = `${n.getFullYear()}-${pad(n.getMonth() + 1)}-${pad(n.getDate())}`;
+    $("in-time").value = `${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  }
+  $("custom").classList.toggle("on", on);
+  $("btn-now").setAttribute("aria-pressed", !on);
+  $("btn-custom").setAttribute("aria-pressed", on);
+  render();
+}
+$("btn-now").onclick = () => setCustom(false);
+$("btn-custom").onclick = () => setCustom(true);
+$("in-date").onchange = $("in-time").onchange = () => { custom = true; render(); };
+
+function setDir(d) {
+  dir = d;
+  try { localStorage.setItem("dir", d); } catch (e) {}
+  render();
+}
+
+$("tab-to").onclick = () => setDir("to");
+$("tab-from").onclick = () => setDir("from");
+$("refresh").onclick = async () => { try { await loadSchedule(); } catch (e) {} render(); };
+
+document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
+setInterval(render, 15000);                                   // met à jour les « dans X min »
+
+(async function init() {
+  try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
+  render();
+})();
+
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
