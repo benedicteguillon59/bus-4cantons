@@ -9,6 +9,7 @@ import csv
 import io
 import json
 import sys
+import urllib.parse
 import urllib.request
 import zipfile
 from collections import defaultdict
@@ -65,6 +66,38 @@ def expand_services(z, needed, first_day):
         else:
             dates[r["service_id"]].discard(v)
     return {k: sorted(v) for k, v in dates.items()}
+
+
+CAL_URL = "https://data.education.gouv.fr/api/explore/v2.1/catalog/datasets/fr-en-calendrier-scolaire/records"
+
+
+def school_holidays(today):
+    """Vacances scolaires de la zone B (académie de Lille) : [{n, from, to}], `to` = jour de reprise."""
+    q = urllib.parse.urlencode({
+        "where": 'location="Lille" AND end_date >= "%s"' % today.isoformat(),
+        "select": "description,start_date,end_date",
+        "order_by": "start_date",
+        "limit": "30",
+    })
+    try:
+        req = urllib.request.Request(CAL_URL + "?" + q, headers={"User-Agent": "bus-4cantons/1.0"})
+        with urllib.request.urlopen(req, timeout=60) as r:
+            rows = json.load(r)["results"]
+    except Exception as e:  # le calendrier est facultatif : l'appli fonctionne sans
+        print("Calendrier scolaire indisponible :", e, file=sys.stderr)
+        return []
+    best = {}
+    for r in rows:
+        a = (datetime.fromisoformat(r["start_date"]) + timedelta(hours=2)).date()   # minuit heure de Paris (UTC+1/+2)
+        b = (datetime.fromisoformat(r["end_date"]) + timedelta(hours=2)).date()
+        name = r["description"].strip()
+        if "Pont" in name:
+            continue
+        k = (name, a)
+        if k not in best or b > best[k]:      # doublons : on garde la reprise la plus tardive
+            best[k] = b
+    out = [{"n": n, "from": a.isoformat(), "to": b.isoformat()} for (n, a), b in best.items()]
+    return sorted(out, key=lambda h: h["from"])[:6]
 
 
 def main():
@@ -133,6 +166,7 @@ def main():
         "routes": routes,
         "items": items,
         "services": services,
+        "holidays": school_holidays(date.today()),
     }
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))

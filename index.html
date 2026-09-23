@@ -61,6 +61,61 @@
   .empty { text-align:center; color:var(--muted); padding:40px 0; }
   footer { text-align:center; color:var(--muted); font-size:.78rem; padding:0 16px 24px; }
   footer button { font:inherit; color:var(--brand); background:none; border:0; text-decoration:underline; padding:4px; }
+
+  /* ===== Décor joyeux ===== */
+  :root { --pink:#ff5fa2; --violet:#7c5cff; --mint:#3ddbb0; --sun:#ffc94d; }
+  html,body { font-family:"Nunito","Trebuchet MS",ui-rounded,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; }
+  body { background:
+      radial-gradient(circle at 12% 8%, rgba(255,201,77,.35) 0 90px, transparent 91px),
+      radial-gradient(circle at 92% 22%, rgba(255,95,162,.25) 0 120px, transparent 121px),
+      radial-gradient(circle at 8% 78%, rgba(61,219,176,.25) 0 110px, transparent 111px),
+      linear-gradient(160deg,#fff1f7 0%,#eef1ff 50%,#e8fbf5 100%) fixed; }
+  @media (prefers-color-scheme: dark) {
+    body { background:
+      radial-gradient(circle at 12% 8%, rgba(255,201,77,.12) 0 90px, transparent 91px),
+      radial-gradient(circle at 92% 22%, rgba(255,95,162,.14) 0 120px, transparent 121px),
+      radial-gradient(circle at 8% 78%, rgba(61,219,176,.12) 0 110px, transparent 111px),
+      linear-gradient(160deg,#1b1330 0%,#131a3a 50%,#0f2a2c 100%) fixed; }
+  }
+  header { background:linear-gradient(135deg,rgba(255,255,255,.85),rgba(255,236,246,.85)); backdrop-filter:blur(8px);
+    border-bottom:0; box-shadow:0 4px 18px rgba(124,92,255,.15); border-radius:0 0 22px 22px; }
+  @media (prefers-color-scheme: dark) { header { background:linear-gradient(135deg,rgba(35,27,64,.9),rgba(28,24,58,.9)); } }
+  h1 span::before { content:"🚌 "; display:inline-block; animation:wiggle 3.2s ease-in-out infinite; transform-origin:70% 80%; }
+  h1 span { font-size:1.15rem; font-weight:800; }
+  .tabs button { border:2px solid transparent; box-shadow:0 2px 8px rgba(0,0,0,.08); transition:transform .15s, box-shadow .15s; }
+  .tabs button:active { transform:scale(.97); }
+  .tabs button[aria-pressed="true"] { background:linear-gradient(135deg,var(--violet),var(--pink)); color:#fff; border-color:transparent; box-shadow:0 6px 16px rgba(124,92,255,.4); }
+  .tabs button[aria-pressed="true"] small { color:#fff; }
+  .when-bar button { border-radius:99px; border-color:transparent; box-shadow:0 2px 6px rgba(0,0,0,.08); }
+  .when-bar button[aria-pressed="true"] { background:var(--mint); color:#053b2e; border-color:transparent; }
+  .notice { border-radius:14px; }
+  .hello { position:relative; overflow:hidden; background:linear-gradient(135deg,#ffd6e8 0%,#e0d4ff 55%,#c9f7ea 100%); box-shadow:0 6px 18px rgba(255,95,162,.25); }
+  @media (prefers-color-scheme: dark) { .hello { background:linear-gradient(135deg,#5a2a54,#33296b 55%,#1f4a48); } }
+  .hello::after { content:"✨"; position:absolute; right:10px; top:6px; font-size:1rem; animation:twinkle 2.4s ease-in-out infinite; }
+  .hello .emo { font-size:2.2rem; animation:bounce 2.6s ease-in-out infinite; }
+  .hello p { font-size:1rem; font-weight:600; }
+  li { border-left:7px solid var(--c,#7c5cff); box-shadow:0 4px 14px rgba(60,40,120,.12); animation:pop .45s both; }
+  li:nth-child(2){animation-delay:.05s} li:nth-child(3){animation-delay:.1s} li:nth-child(4){animation-delay:.15s}
+  li:nth-child(5){animation-delay:.2s} li:nth-child(6){animation-delay:.25s} li:nth-child(7){animation-delay:.3s} li:nth-child(8){animation-delay:.35s}
+  .badge { border-radius:99px; box-shadow:0 3px 8px rgba(0,0,0,.2); }
+  .mins { color:var(--brand); }
+  footer::before { content:"🌸 🎒 ✨ 🚌 ✨ 🎒 🌸"; display:block; margin-bottom:6px; letter-spacing:4px; opacity:.85; }
+  #alert { display:none; }
+  #alert.on { display:block; background:linear-gradient(135deg,#ff8a3d,#ff4d6d); color:#fff; border-radius:16px; padding:12px 14px; margin:0 0 12px; font-weight:800; font-size:1.05rem; box-shadow:0 6px 18px rgba(255,77,109,.4); animation:pulse 1.4s ease-in-out infinite; }
+  #alert small { display:block; font-weight:600; opacity:.9; font-size:.85rem; margin-top:2px; }
+  .vac { display:none; background:var(--card); border-radius:99px; padding:8px 14px; margin:-2px 0 12px; font-weight:700; font-size:.92rem; text-align:center; box-shadow:0 3px 10px rgba(60,40,120,.1); }
+  .vac.on { display:block; }
+  .cd { font-variant-numeric:tabular-nums; font-weight:800; color:var(--brand); }
+  .cd.urgent { color:#e11d48; animation:pulse 1s ease-in-out infinite; display:inline-block; }
+  .tag.last { background:#e11d48; color:#fff; border-color:transparent; margin:4px 0 0; }
+  .share { display:block; width:100%; margin:14px 0 0; border:0; border-radius:99px; padding:12px 16px; font:inherit; font-weight:800; color:#fff; background:linear-gradient(135deg,#25d366,#128c7e); box-shadow:0 6px 16px rgba(18,140,126,.35); }
+  .share:active { transform:scale(.98); }
+  @keyframes pulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+  @keyframes wiggle { 0%,100%{transform:rotate(0)} 10%{transform:rotate(-12deg)} 20%{transform:rotate(10deg)} 30%{transform:rotate(-6deg)} 40%{transform:rotate(0)} }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-5px)} }
+  @keyframes twinkle { 0%,100%{opacity:.3; transform:scale(.8)} 50%{opacity:1; transform:scale(1.2)} }
+  @keyframes pop { from{opacity:0; transform:translateY(10px) scale(.98)} to{opacity:1; transform:none} }
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
 </style>
 </head>
 <body>
@@ -78,8 +133,11 @@
 </header>
 <main>
   <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Pour Margaux</b><span id="hello-txt"></span></p></div>
+  <div id="alert" role="status"></div>
+  <div class="vac" id="vac"></div>
   <div id="notice"></div>
   <ul id="list"></ul>
+  <button class="share" id="share">📤 Envoyer les prochains bus sur WhatsApp</button>
 </main>
 <footer>
   Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
@@ -118,10 +176,13 @@ function upcoming(now) {
       if (!set || !set.has(key)) continue;
       const t = at(day, it.d);
       if (t < now.getTime() - (custom ? 0 : 30e3)) continue;
-      out.push({ it, t, dst: it.dst.map(([p, s]) => [DATA.places[p], at(day, s)]) });
+      out.push({ it, t, k: key + '|' + it.p, dst: it.dst.map(([p, s]) => [DATA.places[p], at(day, s)]) });
     }
   }
   out.sort((a, b) => a.t - b.t);
+  const lastT = {};                                   // dernier départ de chaque jour et de chaque arrêt
+  for (const o of out) lastT[o.k] = Math.max(lastT[o.k] || 0, o.t);
+  for (const o of out) o.last = o.t === lastT[o.k];
   return out.slice(0, MAX_ITEMS);
 }
 
@@ -142,10 +203,12 @@ function render() {
   $("notice").innerHTML = notices.map(n => `<div class="notice">${n}</div>`).join("");
 
   const rows = upcoming(now);
+  ROWS = rows;
+  NEXT = (!custom && rows.length) ? rows[0] : null;
   if (!rows.length) {
     $("list").innerHTML = `<li class="empty" style="display:block">Aucun passage prévu prochainement.</li>`;
   } else {
-    $("list").innerHTML = rows.map(({ it, t, dst }) => {
+    $("list").innerHTML = rows.map(({ it, t, dst, last }, idx) => {
       const r = DATA.routes[it.r] || { n: it.r, c: "555555", t: "FFFFFF" };
       const mins = Math.max(0, Math.round((t - real.getTime()) / 60000));
       const wait = mins === 0 ? "maintenant" : mins < 60 ? "dans " + mins + " min" : mins < 1440 ? "dans " + Math.floor(mins / 60) + " h " + String(mins % 60).padStart(2, "0") : "";
@@ -153,14 +216,16 @@ function render() {
       const dayTxt = dd === 0 ? "" : dd === 1 ? "demain" : new Date(t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
       const arrive = dst.map(([n, ms]) => `<span class="nw">${esc(n)} <b>${hhmm(ms)}</b></span>`).join("<br>");
       const towards = dir === "from" ? `<br><small>Direction ${esc(cap(it.h))}</small>` : "";
-      return `<li>
+      return `<li style="--c:#${r.c}">
         <div class="badge" style="background:#${r.c};color:#${r.t}">${esc(r.n)}</div>
         <div class="place">${esc(DATA.places[it.p])}</div>
-        <div class="when"><div class="mins">${hhmm(t)}</div><div class="clock">${[dayTxt, wait].filter(Boolean).join(" · ")}</div></div>
+        <div class="when"><div class="mins">${hhmm(t)}</div><div class="clock">${idx === 0 && !custom && t - real.getTime() < 3600e3 ? `dans <span class="cd" data-t="${t}"></span>` : [dayTxt, wait].filter(Boolean).join(" · ")}</div>${last ? '<span class="tag last">🏁 dernier bus</span>' : ""}</div>
         <div class="sub"><span class="nw">Arrivée :</span> ${dst.length > 1 ? "<br>" : ""}${arrive}${towards}</div>
       </li>`;
     }).join("");
   }
+  renderVac(real);
+  tick();
   $("status").textContent = custom ? "à partir du " + now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " " + hhmm(now.getTime()) : "mis à jour " + hhmm(real.getTime());
 }
 
@@ -304,9 +369,109 @@ function localStorage_get(k) { try { return localStorage.getItem(k); } catch (e)
 $("hello").onclick = pickHello;
 pickHello();
 
+/* ---------- Alerte « il faut partir », compte à rebours, vacances, partage ---------- */
+let ROWS = [], NEXT = null;
+
+function fmtCd(ms) {
+  const s = Math.max(0, Math.floor(ms / 1000)), h = Math.floor(s / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+  return h ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+}
+function tick() {
+  const now = Date.now();
+  document.querySelectorAll(".cd").forEach(el => {
+    const d = Number(el.dataset.t) - now;
+    el.textContent = d <= 0 ? "maintenant" : fmtCd(d);
+    el.classList.toggle("urgent", d < 600e3);
+  });
+  const a = $("alert");
+  const d = NEXT ? NEXT.t - now : Infinity;
+  if (NEXT && d <= 600e3 && d > -30e3) {
+    const min = Math.max(0, Math.ceil(d / 60000));
+    const r = DATA.routes[NEXT.it.r], place = DATA.places[NEXT.it.p];
+    a.innerHTML = (d < 120e3 ? "🚨 Cours ! " : "🏃 Attrape ton sac ! ") + `Le bus ${esc(r ? r.n : NEXT.it.r)} part ${min <= 1 ? "dans moins d'une minute" : "dans " + min + " min"}` +
+      `<small>${esc(place)} · ${hhmm(NEXT.t)}</small>`;
+    a.classList.add("on");
+  } else a.classList.remove("on");
+}
+setInterval(tick, 1000);
+
+const dayOnly = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+const parseDay = iso => { const [y, m, dd] = iso.split("-").map(Number); return new Date(y, m - 1, dd); };
+const nDays = (a, b) => Math.round((b - a) / 864e5);
+const lower1 = s => s.replace(/^V/, "v");   // "Vacances de la Toussaint" -> "vacances de la Toussaint"
+
+function renderVac(now) {
+  const el = $("vac");
+  if (!DATA || !DATA.holidays || !DATA.holidays.length) { el.classList.remove("on"); return; }
+  const today = dayOnly(now);
+  let txt = "";
+  for (const h of DATA.holidays) {
+    const from = parseDay(h.from), to = parseDay(h.to);
+    if (today >= from && today < to) {
+      txt = `🎉 C'est les vacances ! Reprise ${to.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}`;
+      break;
+    }
+    if (today < from) {
+      const n = nDays(today, from);
+      txt = `🏖️ ${h.n} ${n === 1 ? "commencent demain !" : "dans " + n + " jours"}`;
+      break;
+    }
+  }
+  el.textContent = txt;
+  el.classList.toggle("on", !!txt);
+}
+
+/* Jours spéciaux : anniversaire de Margaux (13 novembre), fêtes, vacances */
+function specialHello(now) {
+  const today = dayOnly(now), m = today.getMonth() + 1, d = today.getDate();
+  let bday = new Date(today.getFullYear(), 10, 13);
+  const toB = nDays(today, bday);
+  if (toB === 0) return ["🎂", "JOYEUX ANNIVERSAIRE MARGAUX ! 🎉 Une année de plus, une année de mieux. Mamie t'embrasse très fort !"];
+  if (toB === 1) return ["🎈", "Demain, c'est ton anniversaire, ma chérie ! Tu as déjà préparé ta plus belle tenue ?"];
+  if (toB > 1 && toB <= 7) return ["🎁", `Plus que ${toB} jours avant ton anniversaire, Margaux ! Mamie compte les dodos avec toi.`];
+  if (toB === -1) return ["🥳", "Bonne première journée de ta nouvelle année, ma Margaux !"];
+  if (m === 12 && d === 24) return ["🎄", "C'est la veille de Noël ! Pense à laisser du lait et des biscuits pour le Père Noël."];
+  if (m === 12 && d === 25) return ["🎅", "Joyeux Noël ma chérie ! Les plus beaux cadeaux sont ceux qui sont autour de la table."];
+  if (m === 12 && d === 31) return ["🥂", "Dernier jour de l'année ! Tu as le droit de veiller un peu, mais pas jusqu'à l'aube."];
+  if (m === 1 && d === 1) return ["🎆", "Bonne année, Margaux ! Que cette année te soit douce et pleine de belles surprises."];
+  if (m === 10 && d === 31) return ["🎃", "Joyeux Halloween ! Attention aux fantômes dans le bus. Ils ne prennent jamais de ticket."];
+  if (m === 4 && d === 1) return ["🐟", "Poisson d'avril ! Ne crois pas tout ce qu'on te dit aujourd'hui, même pas Mamie."];
+  if (DATA && DATA.holidays) {
+    for (const h of DATA.holidays) {
+      const from = parseDay(h.from), to = parseDay(h.to), n = lower1(h.n);
+      if (nDays(today, from) === 1) return ["🎉", `Dernier jour avant les ${n} ! Un petit effort et c'est la liberté !`];
+      if (nDays(today, from) === 0) return ["🏖️", `C'est parti pour les ${n} ! Repose-toi bien, ma chérie.`];
+      if (nDays(today, to) === 0) return /été/i.test(n)
+        ? ["🎒", "C'est la rentrée, ma Margaux ! Nouveau cahier, nouvelle année, nouvelles aventures."]
+        : ["📚", `Reprise après les ${n}. Courage, les prochaines arrivent vite !`];
+    }
+  }
+  return null;
+}
+function setHello([emo, txt]) { $("hello-emo").textContent = emo; $("hello-txt").textContent = txt; }
+
+/* Partage WhatsApp */
+function shareText() {
+  const lines = ROWS.slice(0, 3).map(({ it, t, dst }) => {
+    const r = DATA.routes[it.r];
+    const day = dayOnly(new Date(t)).getTime() === dayOnly(new Date()).getTime() ? "" : new Date(t).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " ";
+    return `🚌 Bus ${r ? r.n : it.r} : ${DATA.places[it.p]} ${day}${hhmm(t)} → ${dst.map(([n, ms]) => n + " " + hhmm(ms)).join(", ")}`;
+  });
+  const title = dir === "to" ? "Bouvines / Tournebride → 4 Cantons" : "4 Cantons → Bouvines / Tournebride";
+  return `${title}\n${lines.join("\n")}\n${location.href.split("?")[0]}`;
+}
+$("share").onclick = () => {
+  if (!ROWS.length) return;
+  const text = shareText();
+  if (navigator.share) navigator.share({ text }).catch(() => {});
+  else window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
+};
+
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
   render();
+  const sp = specialHello(new Date());
+  if (sp) setHello(sp);
 })();
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
