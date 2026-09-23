@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Bus 4 Cantons</title>
-<meta name="theme-color" content="#00427a">
+<meta name="theme-color" content="#4f7053">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
@@ -167,6 +167,16 @@
   #alert.on { background:var(--coral); }
   .cd.urgent { color:var(--coral); }
   .tag.last { background:var(--coral); }
+  /* Présentation compacte des cartes */
+  .badge { grid-row:span 2; }
+  .when { grid-row:span 2; }
+  .sub { grid-column:2; border-top:0; padding-top:0; margin-top:0; }
+  .dur { font-size:.85rem; color:var(--muted); font-weight:600; white-space:nowrap; }
+  /* Carte : ligne d'arrivée sur toute la largeur, sans débordement */
+  .badge, .when { grid-row:auto; }
+  .place { min-width:0; }
+  .sub { grid-column:1 / -1; border-top:0; padding-top:2px; margin-top:0; min-width:0; overflow-wrap:anywhere; line-height:1.5; }
+  .dur { white-space:normal; }
 </style>
 </head>
 <body>
@@ -240,6 +250,7 @@ function upcoming(now) {
 }
 
 const hhmm = ms => new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const fmtDur = min => min < 60 ? min + " min" : Math.floor(min / 60) + " h " + String(min % 60).padStart(2, "0");
 const label = n => esc(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const cap = s => s.split(" - ")[0].toLowerCase().replace(/(^|[ '-])(\S)/g, (m, a, b) => a + b.toUpperCase());  // "MOUCHIN - Place" -> "Mouchin"
@@ -268,13 +279,13 @@ function render() {
       const wait = mins === 0 ? "maintenant" : mins < 60 ? "dans " + mins + " min" : mins < 1440 ? "dans " + Math.floor(mins / 60) + " h " + String(mins % 60).padStart(2, "0") : "";
       const dd = Math.round((new Date(t).setHours(0,0,0,0) - new Date(real).setHours(0,0,0,0)) / 864e5);
       const dayTxt = dd === 0 ? "" : dd === 1 ? "demain" : new Date(t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
-      const arrive = dst.map(([n, ms]) => `<span class="nw">${label(n)} <b>${hhmm(ms)}</b></span>`).join("<br>");
+      const arrive = dst.map(([n, ms]) => `<span class="nw">${label(n)} <b>${hhmm(ms)}</b></span> <span class="dur">· trajet ${fmtDur(Math.round((ms - t) / 60000))}</span>`).join("<br>");
       const towards = dir === "from" ? `<br><small>Direction ${esc(cap(it.h))}</small>` : "";
       return `<li style="--c:#${r.c}">
         <div class="badge" style="background:#${r.c};color:#${r.t}">${esc(r.n)}</div>
         <div class="place">${label(DATA.places[it.p])}</div>
         <div class="when"><div class="mins">${hhmm(t)}</div><div class="clock">${idx === 0 && !custom && t - real.getTime() < 3600e3 ? `dans <span class="cd" data-t="${t}"></span>` : [dayTxt, wait].filter(Boolean).join(" · ")}</div>${last ? '<span class="tag last">🏁 dernier bus</span>' : ""}</div>
-        <div class="sub"><span class="nw">Arrivée :</span> ${dst.length > 1 ? "<br>" : ""}${arrive}${towards}</div>
+        <div class="sub"><span class="nw">Arrivée :</span> ${arrive}${towards}</div>
       </li>`;
     }).join("");
   }
@@ -509,7 +520,7 @@ function shareText() {
   const lines = ROWS.slice(0, 3).map(({ it, t, dst }) => {
     const r = DATA.routes[it.r];
     const day = dayOnly(new Date(t)).getTime() === dayOnly(new Date()).getTime() ? "" : new Date(t).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " ";
-    return `🚌 Bus ${r ? r.n : it.r} : ${DATA.places[it.p]} ${day}${hhmm(t)} → ${dst.map(([n, ms]) => n + " " + hhmm(ms)).join(", ")}`;
+    return `🚌 Bus ${r ? r.n : it.r} : ${DATA.places[it.p]} ${day}${hhmm(t)} → ${dst.map(([n, ms]) => n + " " + hhmm(ms) + " (" + fmtDur(Math.round((ms - t) / 60000)) + ")").join(", ")}`;
   });
   const title = dir === "to" ? "Bouvines / Tournebride → 4 Cantons" : "4 Cantons → Bouvines / Tournebride";
   return `${title}\n${lines.join("\n")}\n${location.href.split("?")[0]}`;
@@ -570,6 +581,7 @@ function renderTraffic() {
 document.addEventListener("visibilitychange", () => { if (!document.hidden) loadTraffic(); });
 setInterval(() => { if (!document.hidden) loadTraffic(); }, 60000);
 loadTraffic();
+
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
