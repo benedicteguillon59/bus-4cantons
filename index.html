@@ -116,6 +116,57 @@
   @keyframes twinkle { 0%,100%{opacity:.3; transform:scale(.8)} 50%{opacity:1; transform:scale(1.2)} }
   @keyframes pop { from{opacity:0; transform:translateY(10px) scale(.98)} to{opacity:1; transform:none} }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation:none !important; transition:none !important; } }
+
+  /* Bandeau du haut : uni, sans dégradé */
+  header { background:var(--card); backdrop-filter:none; }
+  @media (prefers-color-scheme: dark) { header { background:var(--card); } }
+  /* Couleurs unies (sans dégradé) pour les boutons, l'alerte et le mot pour Margaux */
+  .tabs button[aria-pressed="true"] { background:var(--violet); }
+  .hello { background:#dff7ee; }
+  @media (prefers-color-scheme: dark) { .hello { background:#1f3d38; } }
+  #alert.on { background:#ff6b3d; }
+  .share { background:#1fa855; }
+  /* Infos trafic (métro ligne 1) */
+  #traffic .alert-m1 { background:#fde8e6; color:#7a1610; border-left:6px solid #d92d20; border-radius:14px; padding:10px 12px; margin:0 0 12px; font-size:.92rem; line-height:1.35; }
+  #traffic .alert-m1 b { display:block; font-size:.98rem; margin-bottom:2px; }
+  #traffic .alert-m1 small { display:block; opacity:.75; margin-top:4px; }
+  @media (prefers-color-scheme: dark) { #traffic .alert-m1 { background:#4a1d1a; color:#ffd7d2; } }
+  .trafficline { font-size:.8rem; margin:0 0 6px; }
+  .trafficline a { color:var(--brand); }
+  /* ===== Palette « turquoise & corail », fond uni ===== */
+  :root { --bg:#f3f7f8; --card:#fff; --text:#15252b; --muted:#5f7178; --line:#dde7ea;
+          --brand:#0f766e; --brand-text:#fff; --violet:#0f766e; --mint:#bfe9e3; --coral:#f0654a; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#0d1b1e; --card:#16292d; --text:#e6f1f2; --muted:#93aab0; --line:#243b40;
+            --brand:#2dd4bf; --brand-text:#04211d; --violet:#2dd4bf; --mint:#134e4a; --coral:#ff8a6b; }
+  }
+  html, body, body { background:var(--bg) !important; }
+  header { background:var(--card); box-shadow:0 2px 10px rgba(15,60,70,.08); }
+  .tabs button[aria-pressed="true"] { background:var(--brand); color:var(--brand-text); box-shadow:0 4px 12px rgba(15,118,110,.3); }
+  .tabs button[aria-pressed="true"] small { color:inherit; }
+  .when-bar button[aria-pressed="true"] { background:var(--mint); color:var(--text); }
+  .hello { background:#e6f3f2; color:var(--text); }
+  @media (prefers-color-scheme: dark) { .hello { background:#183a3c; } }
+  #alert.on { background:var(--coral); color:#fff; }
+  .share { background:var(--brand); color:var(--brand-text); }
+  .badge { box-shadow:0 2px 6px rgba(0,0,0,.15); }
+  li { box-shadow:0 2px 8px rgba(15,60,70,.08); }
+  .hello { box-shadow:0 2px 8px rgba(15,60,70,.1); }
+  /* ===== Palette « vert sauge & terracotta » ===== */
+  :root { --bg:#f5f6f1; --card:#fff; --text:#22291f; --muted:#666f61; --line:#e2e6da;
+          --brand:#4f7053; --brand-text:#fff; --violet:#4f7053; --mint:#dbe7d6; --coral:#c4553c; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#141912; --card:#1e251c; --text:#e8eee3; --muted:#9aa591; --line:#2e372b;
+            --brand:#a7cfa9; --brand-text:#10210f; --violet:#a7cfa9; --mint:#2f4a30; --coral:#e2785f; }
+  }
+  header { box-shadow:0 2px 10px rgba(50,70,45,.08); }
+  .tabs button[aria-pressed="true"] { box-shadow:0 4px 12px rgba(79,112,83,.3); }
+  .hello { background:#e8eee2; box-shadow:0 2px 8px rgba(50,70,45,.1); }
+  @media (prefers-color-scheme: dark) { .hello { background:#243222; } }
+  li { box-shadow:0 2px 8px rgba(50,70,45,.09); }
+  #alert.on { background:var(--coral); }
+  .cd.urgent { color:var(--coral); }
+  .tag.last { background:var(--coral); }
 </style>
 </head>
 <body>
@@ -132,6 +183,7 @@
   </div>
 </header>
 <main>
+  <div id="traffic" role="status"></div>
   <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Pour Margaux</b><span id="hello-txt"></span></p></div>
   <div id="alert" role="status"></div>
   <div class="vac" id="vac"></div>
@@ -141,6 +193,7 @@
 </main>
 <footer>
   Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
+  <p class="trafficline" id="trafficline"><a href="https://www.ilevia.fr/infos-trafic" target="_blank" rel="noopener">Infos trafic Ilévia</a></p>
   <button id="refresh">Actualiser</button>
 </footer>
 
@@ -187,6 +240,7 @@ function upcoming(now) {
 }
 
 const hhmm = ms => new Date(ms).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+const label = n => esc(n);
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 const cap = s => s.split(" - ")[0].toLowerCase().replace(/(^|[ '-])(\S)/g, (m, a, b) => a + b.toUpperCase());  // "MOUCHIN - Place" -> "Mouchin"
 
@@ -214,11 +268,11 @@ function render() {
       const wait = mins === 0 ? "maintenant" : mins < 60 ? "dans " + mins + " min" : mins < 1440 ? "dans " + Math.floor(mins / 60) + " h " + String(mins % 60).padStart(2, "0") : "";
       const dd = Math.round((new Date(t).setHours(0,0,0,0) - new Date(real).setHours(0,0,0,0)) / 864e5);
       const dayTxt = dd === 0 ? "" : dd === 1 ? "demain" : new Date(t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
-      const arrive = dst.map(([n, ms]) => `<span class="nw">${esc(n)} <b>${hhmm(ms)}</b></span>`).join("<br>");
+      const arrive = dst.map(([n, ms]) => `<span class="nw">${label(n)} <b>${hhmm(ms)}</b></span>`).join("<br>");
       const towards = dir === "from" ? `<br><small>Direction ${esc(cap(it.h))}</small>` : "";
       return `<li style="--c:#${r.c}">
         <div class="badge" style="background:#${r.c};color:#${r.t}">${esc(r.n)}</div>
-        <div class="place">${esc(DATA.places[it.p])}</div>
+        <div class="place">${label(DATA.places[it.p])}</div>
         <div class="when"><div class="mins">${hhmm(t)}</div><div class="clock">${idx === 0 && !custom && t - real.getTime() < 3600e3 ? `dans <span class="cd" data-t="${t}"></span>` : [dayTxt, wait].filter(Boolean).join(" · ")}</div>${last ? '<span class="tag last">🏁 dernier bus</span>' : ""}</div>
         <div class="sub"><span class="nw">Arrivée :</span> ${dst.length > 1 ? "<br>" : ""}${arrive}${towards}</div>
       </li>`;
@@ -261,7 +315,7 @@ function setDir(d) {
 
 $("tab-to").onclick = () => setDir("to");
 $("tab-from").onclick = () => setDir("from");
-$("refresh").onclick = async () => { try { await loadSchedule(); } catch (e) {} render(); };
+$("refresh").onclick = async () => { try { await loadSchedule(); } catch (e) {} render(); loadTraffic(); };
 
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(render, 15000);                                   // met à jour les « dans X min »
@@ -389,7 +443,7 @@ function tick() {
     const min = Math.max(0, Math.ceil(d / 60000));
     const r = DATA.routes[NEXT.it.r], place = DATA.places[NEXT.it.p];
     a.innerHTML = (d < 120e3 ? "🚨 Cours ! " : "🏃 Attrape ton sac ! ") + `Le bus ${esc(r ? r.n : NEXT.it.r)} part ${min <= 1 ? "dans moins d'une minute" : "dans " + min + " min"}` +
-      `<small>${esc(place)} · ${hhmm(NEXT.t)}</small>`;
+      `<small>${label(place)} · ${hhmm(NEXT.t)}</small>`;
     a.classList.add("on");
   } else a.classList.remove("on");
 }
@@ -466,6 +520,56 @@ $("share").onclick = () => {
   if (navigator.share) navigator.share({ text }).catch(() => {});
   else window.open("https://wa.me/?text=" + encodeURIComponent(text), "_blank");
 };
+
+/* ---------- Infos trafic : perturbations du métro ligne 1 (et messages qui citent 4 Cantons) ---------- */
+const TRAFFIC_URL = "https://data.lillemetropole.fr/geoserver/ogc/features/v1/collections/dsp_ilevia:perturbations/items?f=json&limit=200";
+let TRAFFIC = { ok: false, items: [], at: 0 };
+
+// Les heures de ce flux sont locales, même si elles finissent par « Z » : on retire le Z.
+const localTime = iso => iso ? new Date(iso.replace(/Z$/, "")).getTime() : NaN;
+
+async function loadTraffic() {
+  try {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(TRAFFIC_URL, { cache: "no-store", signal: ctl.signal });
+    clearTimeout(to);
+    if (!r.ok) throw new Error(r.status);
+    const feats = (await r.json()).features || [];
+    const now = Date.now(), seen = new Set(), items = [];
+    for (const f of feats) {
+      const p = f.properties || {}, msg = (p.message || "").trim();
+      if (!msg || seen.has(msg)) continue;
+      const m1 = /:ME1:/.test(p.cible || "") || /ligne 1 du m[ée]tro/i.test(msg);
+      const cq = /4 Cantons|Pierre Mauroy/i.test(msg);
+      if (!m1 && !cq) continue;
+      const end = localTime(p.heure_fin_prevue), mod = localTime(p.date_modification);
+      const active = !isNaN(end) ? end > now : (now - mod) < 12 * 3600e3;   // fin prévue passée = incident terminé
+      if (!active) continue;
+      seen.add(msg);
+      items.push({ msg, end, mod, m1 });
+    }
+    items.sort((a, b) => b.mod - a.mod);
+    TRAFFIC = { ok: true, items, at: now };
+  } catch (e) { TRAFFIC = { ok: false, items: [], at: TRAFFIC.at }; }
+  renderTraffic();
+}
+
+function renderTraffic() {
+  const box = $("traffic"), line = $("trafficline");
+  const link = '<a href="https://www.ilevia.fr/infos-trafic" target="_blank" rel="noopener">Infos trafic Ilévia</a>';
+  if (!TRAFFIC.ok) {
+    box.innerHTML = "";
+    line.innerHTML = "Info trafic métro indisponible (pas de réseau ?) · " + link;
+    return;
+  }
+  box.innerHTML = TRAFFIC.items.slice(0, 3).map(it =>
+    `<div class="alert-m1"><b>⚠️ ${it.m1 ? "Métro ligne 1" : "Info trafic"}</b>${esc(it.msg)}` +
+    (!isNaN(it.end) && it.end > Date.now() && it.end - Date.now() < 24 * 3600e3 ? `<small>Fin prévue vers ${hhmm(it.end)}</small>` : "") + `</div>`).join("");
+  line.innerHTML = (TRAFFIC.items.length ? "" : `Métro ligne 1 : aucun incident signalé (${hhmm(TRAFFIC.at)}) · `) + link;
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loadTraffic(); });
+setInterval(() => { if (!document.hidden) loadTraffic(); }, 60000);
+loadTraffic();
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
