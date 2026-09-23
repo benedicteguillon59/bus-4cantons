@@ -53,6 +53,11 @@
   #custom { display:none; gap:8px; flex:1 1 100%; }
   #custom.on { display:flex; }
   #custom input[type=date] { flex:1 1 55%; } #custom input[type=time] { flex:1 1 35%; }
+  .hello { background:linear-gradient(135deg,#ffe3ef,#e6ecff); color:#2b2340; border-radius:16px; padding:12px 14px; margin:0 0 12px; display:flex; gap:10px; align-items:center; cursor:pointer; }
+  @media (prefers-color-scheme: dark) { .hello { background:linear-gradient(135deg,#3b2a44,#1f2a4a); color:#f3eaff; } }
+  .hello .emo { font-size:1.8rem; line-height:1; }
+  .hello p { margin:0; font-size:.95rem; line-height:1.35; }
+  .hello p b { display:block; font-size:.8rem; opacity:.7; font-weight:600; margin-bottom:2px; }
   .empty { text-align:center; color:var(--muted); padding:40px 0; }
   footer { text-align:center; color:var(--muted); font-size:.78rem; padding:0 16px 24px; }
   footer button { font:inherit; color:var(--brand); background:none; border:0; text-decoration:underline; padding:4px; }
@@ -72,6 +77,7 @@
   </div>
 </header>
 <main>
+  <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Pour Margaux</b><span id="hello-txt"></span></p></div>
   <div id="notice"></div>
   <ul id="list"></ul>
 </main>
@@ -194,6 +200,66 @@ $("refresh").onclick = async () => { try { await loadSchedule(); } catch (e) {} 
 
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(render, 15000);                                   // met à jour les « dans X min »
+
+
+/* ---------- Petit mot pour Margaux (change à chaque ouverture) ---------- */
+const HELLO = {
+  matin: [
+    ["☀️", "Bonjour Margaux ! Le bus n'attend personne, mais il t'attend peut-être un peu, vérifie l'heure."],
+    ["🥐", "Un petit-déj dans le ventre, un sourire sur le visage : tu es prête pour la journée."],
+    ["🎒", "Sac, carte de bus, téléphone chargé : check ! Bonne journée au lycée."],
+    ["😴", "Le réveil était dur ? Courage, le plus dur est déjà fait : tu es debout !"],
+    ["🌈", "Aujourd'hui, une bonne surprise t'attend quelque part. Reste attentive."],
+    ["🚌", "Ton bus préféré t'emmène vers de belles aventures (et peut-être un contrôle surprise, mais tu gères)."],
+    ["💪", "Tu vas assurer aujourd'hui, comme d'habitude."],
+  ],
+  jour: [
+    ["📚", "Une heure de cours de moins, une heure de liberté de plus. Tiens bon !"],
+    ["😎", "Lycéenne, c'est un métier. Tu le fais très bien."],
+    ["🧠", "Ton cerveau a bien travaillé aujourd'hui. Il mérite un goûter."],
+    ["🎧", "Musique dans les oreilles, monde à tes pieds. Bon trajet !"],
+    ["🍫", "Rappel officiel : le chocolat améliore la concentration. C'est scientifique (presque)."],
+    ["✨", "Tu as le droit d'être fière de toi, même pour les petites choses."],
+  ],
+  soir: [
+    ["🏡", "Retour à la maison : tu as bien mérité de souffler."],
+    ["🌙", "Journée terminée ! Range le sac, respire, tu as tout donné."],
+    ["🍕", "Ce soir, tu as le droit de ne penser à rien. Enfin, presque : il reste les devoirs."],
+    ["🛋️", "Le canapé t'attend. Ne le fais pas patienter trop longtemps."],
+    ["🌟", "Une journée de plus au compteur. Bravo Margaux !"],
+    ["📱", "Un message à une copine avant de dormir ? Ça fait toujours du bien."],
+  ],
+  weekend: [
+    ["🎉", "C'est le week-end, Margaux ! Le bus peut se reposer, toi aussi."],
+    ["🛍️", "Sortie en ville ? Pense à regarder l'heure du retour avant de partir."],
+    ["😴", "Grasse matinée autorisée. Le lycée peut attendre lundi."],
+    ["🎬", "Film, amis, musique : ce week-end est à toi."],
+  ],
+  tous: [
+    ["🌍", "Le monde est grand et tu as toute la vie pour l'explorer."],
+    ["🦄", "Sois toi-même, les autres personnalités sont déjà prises."],
+    ["💛", "Tes parents sont fiers de toi. Ils ne le disent peut-être pas assez, alors on le dit ici."],
+    ["🍀", "Un peu de chance ne fait pas de mal : elle est avec toi aujourd'hui."],
+    ["🎯", "Un objectif à la fois. Aujourd'hui : prendre le bon bus !"],
+    ["🕐", "Petit conseil de bus : arrive 2 minutes avant, tu éviteras de courir."],
+    ["🤝", "Une bonne journée, c'est souvent un sourire à quelqu'un. Essaie !"],
+    ["🌸", "Tu es plus forte que tu ne le crois."],
+  ],
+};
+function pickHello() {
+  const n = new Date(), h = n.getHours(), wd = n.getDay();
+  const cat = (wd === 0 || wd === 6) ? "weekend" : h < 10 ? "matin" : h < 17 ? "jour" : "soir";
+  const pool = HELLO[cat].concat(HELLO.tous);
+  let i;
+  do { i = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && (cat + ":" + i) === localStorage_get("helloKey"));
+  try { localStorage.setItem("helloKey", cat + ":" + i); } catch (e) {}
+  const [emo, txt] = pool[i];
+  $("hello-emo").textContent = emo;
+  $("hello-txt").textContent = txt;
+}
+function localStorage_get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+$("hello").onclick = pickHello;
+pickHello();
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
