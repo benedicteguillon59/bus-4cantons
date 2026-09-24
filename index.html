@@ -539,6 +539,23 @@ let TRAFFIC = { ok: false, items: [], at: 0 };
 // Les heures de ce flux sont locales, même si elles finissent par « Z » : on retire le Z.
 const localTime = iso => iso ? new Date(iso.replace(/Z$/, "")).getTime() : NaN;
 
+// La « fin prévue » du flux est souvent automatique (= modification + 24 h) : elle n'est pas fiable.
+// On lit donc l'heure dans le message (« jusque 12h55 environ »), sinon on limite la durée à 3 h.
+function effectiveEnd(msg, mod, feedEnd) {
+  const plain = msg.replace(/<[^>]+>/g, " ");
+  const m = plain.match(/jusqu(?:e|')\s*(?:à\s*|a\s*)?(\d{1,2})\s*h\s*(\d{2})?/i);
+  if (m && !isNaN(mod)) {
+    const d = new Date(mod);
+    d.setHours(Number(m[1]), Number(m[2] || 0), 0, 0);
+    if (d.getTime() < mod - 10 * 60e3) d.setDate(d.getDate() + 1);           // « jusque 05h20 » dit à 23h50 : lendemain
+    const t = d.getTime() + 20 * 60e3;                                        // + 20 min de marge (« environ »)
+    return isNaN(feedEnd) ? t : Math.min(t, feedEnd);
+  }
+  if (/\b(du|à partir du|jusqu'au|le)\s+\d{1,2}(er)?\s+(\w+\s+)?(au|jusqu)/i.test(plain) || /\b\d{1,2}\s+(janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre)/i.test(plain)) return feedEnd;   // travaux datés
+  const cap = isNaN(mod) ? Infinity : mod + 3 * 3600e3;
+  return isNaN(feedEnd) ? cap : Math.min(feedEnd, cap);
+}
+
 async function loadTraffic() {
   try {
     const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
@@ -553,8 +570,9 @@ async function loadTraffic() {
       const m1 = /:ME1:/.test(p.cible || "") || /ligne 1 du m[ée]tro/i.test(msg);
       const cq = /4 Cantons|Pierre Mauroy/i.test(msg);
       if (!m1 && !cq) continue;
-      const end = localTime(p.heure_fin_prevue), mod = localTime(p.date_modification);
-      const active = !isNaN(end) ? end > now : (now - mod) < 12 * 3600e3;   // fin prévue passée = incident terminé
+      const mod = localTime(p.date_modification);
+      const end = effectiveEnd(msg, mod, localTime(p.heure_fin_prevue));
+      const active = !isNaN(end) ? end > now : (now - mod) < 3 * 3600e3;   // fin dépassée = incident terminé
       if (!active) continue;
       seen.add(msg);
       items.push({ msg, end, mod, m1 });
