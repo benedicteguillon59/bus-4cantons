@@ -7,6 +7,7 @@ Sans dépendance externe (bibliothèque standard uniquement).
 """
 import csv
 import io
+import re
 import json
 import sys
 import urllib.parse
@@ -29,6 +30,18 @@ CQ_STOPS = {"59:00642", "59:03061", "59:03089"}  # VILLENEUVE D ASCQ - 4 Cantons
 def read_csv(z, name):
     with z.open(name) as f:
         yield from csv.DictReader(io.TextIOWrapper(f, encoding="utf-8-sig"))
+
+
+def pretty_stop(name):
+    """« MOUCHIN - Place » -> « Mouchin - Place » ; le terminus 4 Cantons devient « 4 Cantons »."""
+    if "4 Cantons" in name:
+        return "4 Cantons"
+    town, _, rest = name.partition(" - ")
+    small = {"En", "Le", "La", "Les", "De", "Du", "Sur", "Lez", "Sous"}
+    words = [w if w in small and i else w for i, w in enumerate(town.title().split())]
+    words = [w.lower() if (i and w in small) else w for i, w in enumerate(words)]
+    town = re.sub(r"\bD (?=[A-Z])", "d'", " ".join(words)).replace("Melantois", "Mélantois")
+    return f"{town} - {rest}" if rest else town
 
 
 def hms(s):
@@ -110,9 +123,16 @@ def main():
     watch = set(place_of) | CQ_STOPS
 
     trips = {r["trip_id"]: r for r in read_csv(z, "trips.txt") if r["route_id"] in ROUTES}
+    stop_name = {r["stop_id"]: r["stop_name"] for r in read_csv(z, "stops.txt")}
     rows = defaultdict(list)
+    last = {}  # trip_id -> (dernier stop_sequence, stop_id) = terminus
     for r in read_csv(z, "stop_times.txt"):
-        if r["trip_id"] in trips and r["stop_id"] in watch:
+        if r["trip_id"] not in trips:
+            continue
+        seq = int(r["stop_sequence"])
+        if r["trip_id"] not in last or seq > last[r["trip_id"]][0]:
+            last[r["trip_id"]] = (seq, r["stop_id"])
+        if r["stop_id"] in watch:
             rows[r["trip_id"]].append(r)
 
     items = {"to": [], "from": []}
@@ -123,7 +143,8 @@ def main():
         if not loc or not cq:
             continue
         t = trips[tid]
-        base = {"t": tid, "r": t["route_id"], "s": t["service_id"], "h": t["trip_headsign"]}
+        term = pretty_stop(stop_name.get(last[tid][1], t["trip_headsign"]))
+        base = {"t": tid, "r": t["route_id"], "s": t["service_id"], "h": t["trip_headsign"], "e": term}
         cq_seq = int(cq[0]["stop_sequence"])
         before = [r for r in loc if int(r["stop_sequence"]) < cq_seq]   # on monte avant 4 Cantons
         after = [r for r in loc if int(r["stop_sequence"]) > cq_seq]    # on descend après 4 Cantons

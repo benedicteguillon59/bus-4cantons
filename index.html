@@ -177,6 +177,8 @@
   .place { min-width:0; }
   .sub { grid-column:1 / -1; border-top:0; padding-top:2px; margin-top:0; min-width:0; overflow-wrap:anywhere; line-height:1.5; }
   .dur { white-space:normal; }
+  .sub small { display:inline-block; margin-top:2px; }
+  .sub small b { font-size:1em; font-weight:700; }
 </style>
 </head>
 <body>
@@ -280,7 +282,7 @@ function render() {
       const dd = Math.round((new Date(t).setHours(0,0,0,0) - new Date(real).setHours(0,0,0,0)) / 864e5);
       const dayTxt = dd === 0 ? "" : dd === 1 ? "demain" : new Date(t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
       const arrive = dst.map(([n, ms]) => `<span class="nw">${label(n)} <b>${hhmm(ms)}</b></span> <span class="dur">· trajet ${fmtDur(Math.round((ms - t) / 60000))}</span>`).join("<br>");
-      const towards = dir === "from" ? `<br><small>Direction ${esc(cap(it.h))}</small>` : "";
+      const towards = `<br><small>🏁 Terminus : <b>${esc(it.e || cap(it.h))}</b></small>`;
       return `<li style="--c:#${r.c}">
         <div class="badge" style="background:#${r.c};color:#${r.t}">${esc(r.n)}</div>
         <div class="place">${label(DATA.places[it.p])}</div>
