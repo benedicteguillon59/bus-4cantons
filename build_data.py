@@ -113,6 +113,75 @@ def school_holidays(today):
     return sorted(out, key=lambda h: h["from"])[:6]
 
 
+
+# ---------------------------------------------------------------------------
+# Navette Flexity (F4 / F16), sur réservation : GTFS propre à Ilévia (pas celui
+# de la Région). Sert uniquement à indiquer le prochain créneau réservable.
+FLEXITY_GTFS_URL = "https://media.ilevia.fr/opendata/gtfs.zip"
+FLEXITY_ROUTES = {"F4", "F16"}
+FLEXITY_PLACES = {
+    "BV": {"name": "Bouvines Église", "stops": {"BVE001", "BVE002"}},
+    "TB": {"name": "Tournebride", "stops": {"TNB001", "TNB002"}},
+}
+FLEXITY_CQ_STOPS = {"4CA001", "4CA002", "4CA003", "4CA005", "4CA098", "4CA099"}
+
+
+def flexity_data(first_day):
+    try:
+        req = urllib.request.Request(FLEXITY_GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
+        with urllib.request.urlopen(req, timeout=120) as r:
+            z = zipfile.ZipFile(io.BytesIO(r.read()))
+    except Exception as e:
+        print("Navette Flexity indisponible :", e, file=sys.stderr)
+        return None
+
+    place_of = {s: p for p, v in FLEXITY_PLACES.items() for s in v["stops"]}
+    watch = set(place_of) | FLEXITY_CQ_STOPS
+    trips = {r["trip_id"]: r for r in read_csv(z, "trips.txt") if r["route_id"] in FLEXITY_ROUTES}
+    rows = defaultdict(list)
+    for r in read_csv(z, "stop_times.txt"):
+        if r["trip_id"] in trips and r["stop_id"] in watch:
+            rows[r["trip_id"]].append(r)
+
+    items = {"to": [], "from": []}
+    for tid, lst in rows.items():
+        lst.sort(key=lambda r: int(r["stop_sequence"]))
+        loc = [r for r in lst if r["stop_id"] in place_of]
+        cq = [r for r in lst if r["stop_id"] in FLEXITY_CQ_STOPS]
+        if not loc or not cq:
+            continue
+        t = trips[tid]
+        if int(loc[0]["stop_sequence"]) < int(cq[0]["stop_sequence"]):
+            d = t_of(loc[0], "dep")
+            if d is not None:
+                items["to"].append({"t": tid, "r": t["route_id"], "s": t["service_id"], "p": place_of[loc[0]["stop_id"]], "d": d})
+        else:
+            d = t_of(cq[-1], "dep")
+            if d is not None:
+                items["from"].append({"t": tid, "r": t["route_id"], "s": t["service_id"], "p": "4C", "d": d})
+    for k in items:
+        items[k].sort(key=lambda i: (i["s"], i["d"]))
+
+    needed = {i["s"] for k in items for i in items[k]}
+    services = defaultdict(list)
+    for r in read_csv(z, "calendar_dates.txt"):
+        if r["service_id"] in needed and r["exception_type"] == "1" and int(r["date"]) >= int(first_day.strftime("%Y%m%d")):
+            services[r["service_id"]].append(int(r["date"]))
+    for k in services:
+        services[k].sort()
+
+    routes = {}
+    for r in read_csv(z, "routes.txt"):
+        if r["route_id"] in FLEXITY_ROUTES:
+            routes[r["route_id"]] = {"n": r["route_short_name"], "c": r.get("route_color") or "888888", "t": r.get("route_text_color") or "FFFFFF"}
+
+    return {
+        "places": {**{k: v["name"] for k, v in FLEXITY_PLACES.items()}, "4C": "4 Cantons"},
+        "routes": routes,
+        "items": items,
+        "services": services,
+    }
+
 def main():
     print("Téléchargement du GTFS régional…", file=sys.stderr)
     req = urllib.request.Request(GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
@@ -188,6 +257,7 @@ def main():
         "items": items,
         "services": services,
         "holidays": school_holidays(date.today()),
+        "flexity": flexity_data(date.today() - timedelta(days=2)),
     }
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))

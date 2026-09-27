@@ -183,10 +183,10 @@
   #flexity { margin-top:14px; background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px rgba(50,70,45,.1); }
   #flexity h2 { margin:0 0 4px; font-size:1rem; }
   #flexity p { margin:0 0 12px; color:var(--muted); font-size:.88rem; line-height:1.4; }
+  .flexity-next { background:var(--mint); border-radius:10px; padding:8px 10px; font-size:.88rem; color:var(--text); font-weight:600; }
   .flexity-btns { display:flex; gap:8px; flex-wrap:wrap; }
-  .flexity-btns a { flex:1 1 150px; text-align:center; text-decoration:none; border-radius:12px; padding:11px 10px; font-weight:700; font-size:.92rem; }
+  .flexity-btns a { flex:1 1 100%; text-align:center; text-decoration:none; border-radius:12px; padding:12px 10px; font-weight:700; font-size:.95rem; }
   .flexity-call { background:var(--brand); color:var(--brand-text); }
-  .flexity-web { background:var(--mint); color:var(--text); border:2px solid var(--line); }
 </style>
 </head>
 <body>
@@ -211,10 +211,10 @@
   <ul id="list"></ul>
   <section id="flexity" aria-label="Navette sur réservation">
     <h2>🚕 Navette Flexity (sur réservation)</h2>
-    <p>Un trajet direct existe aussi entre Bouvines/Sainghin et 4 Cantons, uniquement sur réservation, jusqu'à <b>1h avant le départ</b> (lignes F4 en journée, F16 le soir jusqu'à 0h30).</p>
+    <p>Un trajet direct existe aussi entre Bouvines/Sainghin et 4 Cantons (lignes F4 en journée, F16 le soir jusqu'à 0h30). Réservation obligatoire, jusqu'à <b>1h avant le départ</b>, par téléphone.</p>
+    <p class="flexity-next" id="flexity-next"></p>
     <div class="flexity-btns">
-      <a class="flexity-call" href="tel:0320404040">📞 Appeler pour réserver</a>
-      <a class="flexity-web" href="https://reservation.ilevia.fr" target="_blank" rel="noopener">🌐 Réserver en ligne</a>
+      <a class="flexity-call" href="tel:0320404040">📞 03 20 40 40 40 — Appeler pour réserver</a>
     </div>
   </section>
   <button class="share" id="share">📤 Envoyer les prochains bus sur WhatsApp</button>
@@ -241,6 +241,42 @@ async function loadSchedule() {
   DATA = await r.json();
   serviceSets.clear();
   for (const [k, v] of Object.entries(DATA.services)) serviceSets.set(k, new Set(v));
+  flexServiceSets.clear();
+  if (DATA.flexity) for (const [k, v] of Object.entries(DATA.flexity.services)) flexServiceSets.set(k, new Set(v));
+}
+
+/* ---------- Navette Flexity (F4 / F16) : prochain créneau réservable ---------- */
+const flexServiceSets = new Map();
+const BOOK_CUTOFF = 3600e3;   // réservation possible jusqu'à 1h avant le départ
+
+function nextFlexity(now) {
+  if (!DATA.flexity) return null;
+  const list = DATA.flexity.items[dir] || [];
+  let best = null;
+  for (let off = 0; off <= 8; off++) {
+    const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + off);
+    const key = ymd(day);
+    for (const it of list) {
+      const set = flexServiceSets.get(it.s);
+      if (!set || !set.has(key)) continue;
+      const t = at(day, it.d);
+      if (t - now.getTime() < BOOK_CUTOFF) continue;          // trop tard pour réserver
+      if (!best || t < best.t) best = { it, t };
+    }
+  }
+  return best;
+}
+
+function renderFlexity(now) {
+  const el = $("flexity-next");
+  const best = nextFlexity(now);
+  if (!best) { el.textContent = "Prochain créneau réservable : indisponible pour le moment."; return; }
+  const r = DATA.flexity.routes[best.it.r] || { n: best.it.r };
+  const dd = Math.round((new Date(best.t).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 864e5);
+  const dayTxt = dd === 0 ? "aujourd'hui" : dd === 1 ? "demain" : best.it && new Date(best.t).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "short" });
+  const callBy = new Date(best.t - BOOK_CUTOFF);
+  el.innerHTML = `Prochain créneau réservable (${esc(r.n)}) : <b>${dayTxt} ${hhmm(best.t)}</b> à ${esc(DATA.flexity.places[best.it.p])}` +
+    ` <br><small>à réserver avant ${hhmm(callBy.getTime())}</small>`;
 }
 
 const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
@@ -308,6 +344,7 @@ function render() {
     }).join("");
   }
   renderVac(real);
+  renderFlexity(now);
   tick();
   $("status").textContent = custom ? "à partir du " + now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " " + hhmm(now.getTime()) : "mis à jour " + hhmm(real.getTime());
 }
