@@ -179,6 +179,14 @@
   .dur { white-space:normal; }
   .sub small { display:inline-block; margin-top:2px; }
   .sub small b { font-size:1em; font-weight:700; }
+  /* Navette Flexity sur réservation */
+  #flexity { margin-top:14px; background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px rgba(50,70,45,.1); }
+  #flexity h2 { margin:0 0 4px; font-size:1rem; }
+  #flexity p { margin:0 0 12px; color:var(--muted); font-size:.88rem; line-height:1.4; }
+  .flexity-btns { display:flex; gap:8px; flex-wrap:wrap; }
+  .flexity-btns a { flex:1 1 150px; text-align:center; text-decoration:none; border-radius:12px; padding:11px 10px; font-weight:700; font-size:.92rem; }
+  .flexity-call { background:var(--brand); color:var(--brand-text); }
+  .flexity-web { background:var(--mint); color:var(--text); border:2px solid var(--line); }
 </style>
 </head>
 <body>
@@ -201,6 +209,14 @@
   <div class="vac" id="vac"></div>
   <div id="notice"></div>
   <ul id="list"></ul>
+  <section id="flexity" aria-label="Navette sur réservation">
+    <h2>🚕 Navette Flexity (sur réservation)</h2>
+    <p>Un trajet direct existe aussi entre Bouvines/Sainghin et 4 Cantons, uniquement sur réservation, jusqu'à <b>1h avant le départ</b> (lignes F4 en journée, F16 le soir jusqu'à 0h30).</p>
+    <div class="flexity-btns">
+      <a class="flexity-call" href="tel:0320404040">📞 Appeler pour réserver</a>
+      <a class="flexity-web" href="https://reservation.ilevia.fr" target="_blank" rel="noopener">🌐 Réserver en ligne</a>
+    </div>
+  </section>
   <button class="share" id="share">📤 Envoyer les prochains bus sur WhatsApp</button>
 </main>
 <footer>
