@@ -180,7 +180,7 @@
   .sub small { display:inline-block; margin-top:2px; }
   .sub small b { font-size:1em; font-weight:700; }
   /* Navette Flexity sur réservation */
-  #flexity { margin-top:14px; background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px rgba(50,70,45,.1); }
+  #flexity { margin:14px 0; background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px rgba(50,70,45,.1); }
   #flexity h2 { margin:0 0 4px; font-size:1rem; }
   #flexity p { margin:0 0 12px; color:var(--muted); font-size:.88rem; line-height:1.4; }
   .flexity-next { background:var(--mint); border-radius:10px; padding:8px 10px; font-size:.88rem; color:var(--text); font-weight:600; }
@@ -211,7 +211,7 @@
   <ul id="list"></ul>
   <section id="flexity" aria-label="Navette sur réservation">
     <h2>🚕 Navette Flexity (sur réservation)</h2>
-    <p>Un trajet direct existe aussi entre Bouvines/Sainghin et 4 Cantons (lignes F4 en journée, F16 le soir jusqu'à 0h30). Réservation obligatoire, jusqu'à <b>1h avant le départ</b>, par téléphone.</p>
+    <p>Trajet direct sur réservation entre Bouvines/Sainghin et 4 Cantons (lignes F4 en journée, F16 le soir jusqu'à 0h30). Réservation obligatoire, jusqu'à <b>1h avant le départ</b>, par téléphone.</p>
     <p class="flexity-next" id="flexity-next"></p>
     <div class="flexity-btns">
       <a class="flexity-call" href="tel:0320404040">📞 03 20 40 40 40 — Appeler pour réserver</a>
@@ -267,9 +267,8 @@ function nextFlexity(now) {
   return best;
 }
 
-function renderFlexity(now) {
+function renderFlexity(now, best) {
   const el = $("flexity-next");
-  const best = nextFlexity(now);
   if (!best) { el.textContent = "Prochain créneau réservable : indisponible pour le moment."; return; }
   const r = DATA.flexity.routes[best.it.r] || { n: best.it.r };
   const dd = Math.round((new Date(best.t).setHours(0, 0, 0, 0) - new Date(now).setHours(0, 0, 0, 0)) / 864e5);
@@ -277,6 +276,15 @@ function renderFlexity(now) {
   const callBy = new Date(best.t - BOOK_CUTOFF);
   el.innerHTML = `Prochain créneau réservable (${esc(r.n)}) : <b>${dayTxt} ${hhmm(best.t)}</b> à ${esc(DATA.flexity.places[best.it.p])}` +
     ` <br><small>à réserver avant ${hhmm(callBy.getTime())}</small>`;
+}
+
+/* Place le pavé Flexity avant les horaires réguliers s'il permet de partir
+   plus d'1h avant le prochain bus 854/870 ; sinon il reste après la liste. */
+function placeFlexity(nextBusTime, flexBest) {
+  const listEl = $("list"), flexEl = $("flexity");
+  const before = flexBest && nextBusTime != null && flexBest.t <= nextBusTime - BOOK_CUTOFF;
+  if (before) listEl.parentNode.insertBefore(flexEl, listEl);
+  else listEl.parentNode.insertBefore(flexEl, listEl.nextSibling);
 }
 
 const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate();
@@ -344,7 +352,9 @@ function render() {
     }).join("");
   }
   renderVac(real);
-  renderFlexity(now);
+  const flexBest = nextFlexity(now);
+  renderFlexity(now, flexBest);
+  placeFlexity(rows.length ? rows[0].t : null, flexBest);
   tick();
   $("status").textContent = custom ? "à partir du " + now.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" }) + " " + hhmm(now.getTime()) : "mis à jour " + hhmm(real.getTime());
 }
