@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Bus 4 Cantons</title>
+<title>Bouvibus</title>
 <meta name="theme-color" content="#4f7053">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
 <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Bus 4 Cantons">
+<meta name="apple-mobile-web-app-title" content="Bouvibus">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root {
@@ -217,11 +217,15 @@
   body.view-info #mairie { display:block; }
   body.view-info #list, body.view-info #flexity, body.view-info #share, body.view-info #notice,
   body.view-info #vac, body.view-info #alert, body.view-info .when-bar { display:none !important; }
+  /* Bandeau « nouvelle adresse » (affiché seulement sur les anciennes adresses) */
+  #newaddr { background:var(--coral); color:#fff; padding:10px 16px; font-size:.9rem; line-height:1.4; text-align:center; }
+  #newaddr a { color:#fff; font-weight:800; text-decoration:underline; }
 </style>
 </head>
 <body>
+<div id="newaddr" hidden><b>📣 Bouvibus a une nouvelle adresse !</b> <a href="https://bouvibus.pages.dev/">bouvibus.pages.dev</a> : ouvre-la, installe l'appli, puis supprime l'ancienne.</div>
 <header>
-  <h1><span>Prochains bus</span><small id="status">chargement…</small></h1>
+  <h1><span>Bouvibus</span><small id="status">chargement…</small></h1>
   <div class="tabs" role="group" aria-label="Sens du trajet">
     <button id="tab-to"   aria-pressed="true">Bouvines / Tournebride<small>→ 4 Cantons</small></button>
     <button id="tab-from" aria-pressed="false">4 Cantons<small>→ Bouvines / Tournebride</small></button>
@@ -647,7 +651,7 @@ function shareText() {
     return `🚌 Bus ${r ? r.n : it.r} : ${DATA.places[it.p]} ${day}${hhmm(t)} → ${dst.map(([n, ms]) => n + " " + hhmm(ms) + " (" + fmtDur(Math.round((ms - t) / 60000)) + ")").join(", ")}`;
   });
   const title = dir === "to" ? "Bouvines / Tournebride → 4 Cantons" : "4 Cantons → Bouvines / Tournebride";
-  return `${title}\n${lines.join("\n")}\n${location.href.split("?")[0]}`;
+  return `🚌 Bouvibus · ${title}\n${lines.join("\n")}\n${location.href.split("?")[0]}`;
 }
 $("share").onclick = () => {
   if (!ROWS.length) return;
@@ -731,6 +735,7 @@ loadTraffic();
    (Analytics & Logs > Web Analytics > le site > « Manage site » / extrait de code). */
 const CF_ANALYTICS = {
   "bus-4cantons.pages.dev": "4a75923c5f4f4eb28cf88102ac3d2a4b",
+  // "bouvibus.pages.dev": "COLLER_LE_JETON_ICI",
   // "votre-pseudo.github.io": "COLLER_LE_JETON_ICI",
 };
 (function () {
@@ -765,6 +770,15 @@ function renderMairie() {
       }).join("")
     : `<li class="pnone">Aucune info publiée ces deux dernières semaines.</li>`;
 }
+
+/* Sur toute adresse autre que la nouvelle (hors tests en local), on invite à passer sur la nouvelle. */
+const NEW_HOST = "bouvibus.pages.dev";
+(function () {
+  const h = location.hostname;
+  if (h === NEW_HOST || /^(localhost$|127\.|192\.168\.|10\.)/.test(h)) return;
+  const b = $("newaddr");
+  if (b) b.hidden = false;
+})();
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }

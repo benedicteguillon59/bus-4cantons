@@ -1,7 +1,7 @@
 {
-  "name": "Bus 4 Cantons",
-  "short_name": "Bus 4 Cantons",
-  "description": "Prochains bus entre Bouvines / Tournebride et 4 Cantons (lignes 854 et 870)",
+  "name": "Bouvibus",
+  "short_name": "Bouvibus",
+  "description": "Bouvibus : les prochains bus entre Bouvines / Tournebride et 4 Cantons (lignes 854 et 870)",
   "lang": "fr",
   "start_url": "./index.html",
   "scope": "./",
