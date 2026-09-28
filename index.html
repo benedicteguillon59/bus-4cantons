@@ -454,6 +454,9 @@ setInterval(render, 15000);                                   // met à jour les
 /* ---------- Le mot du jour (change à chaque ouverture) ---------- */
 const HELLO = {
   matin: [
+    ["🐓", "Village agricole oblige : ton réveil est déjà battu par les coqs du coin. Lève-toi avant qu'ils ne se moquent de toi."],
+    ["🚜", "À Bouvines, le trafic du matin, c'est le bus, les vélos et un tracteur. Personne ne dépasse personne, tout le monde s'en sort."],
+    ["🗣️", "Ici, quand tu rates ton bus, trois voisins le savent avant toi. Autant ne pas le rater."],
     ["⚔️", "Bataille de Bouvines, 1214 : Philippe Auguste a gagné. Ta bataille du jour : le réveil. Tu gères."],
     ["🚌", "Église, Tournebride, Grand Sainghin, 4 Cantons : tu connais le trajet par cœur. La seule vraie question, c'est l'heure."],
     ["😴", "Le bouton « snooze » n'est pas un projet d'avenir. Debout, le bus, lui, ne fait pas de snooze."],
@@ -473,6 +476,9 @@ const HELLO = {
     ["🚀", "Nouvelle journée, nouveau défi : arriver au premier cours avant que le prof ferme la porte."],
   ],
   jour: [
+    ["📖", "Le prof d'histoire prononce le mot « Bouvines » : te voilà expert de la classe. Profites-en, ça n'arrive pas tous les jours."],
+    ["🔎", "Tape « Bouvines » dans n'importe quel livre d'histoire : tu te sentiras célèbre. Ton village, lui, est déjà au programme."],
+    ["🧠", "Philippe Auguste a gagné en 1214 sans appli d'horaires. Toi, tu as Bouvibus : tu n'as plus d'excuse."],
     ["📜", "Au prochain cours sur Philippe Auguste, tu peux dire « c'était chez moi ». Effet garanti."],
     ["🏰", "Depuis 1214, Bouvines est célèbre pour une bataille. Aujourd'hui, la seule bataille : celle pour une place assise dans le bus."],
     ["🏫", "Si on te demande d'où tu viens, réponds « du village de la fameuse bataille ». Personne ne sait quoi répondre."],
@@ -492,6 +498,8 @@ const HELLO = {
     ["🌟", "Ce que tu fais aujourd'hui, ton futur toi te dira merci. Ou « bof, ça va ». C'est déjà bien."],
   ],
   soir: [
+    ["🕗", "Petit rappel utile : le dernier bus de 4 Cantons vers Bouvines part en début de soirée. Regarde l'appli avant de flâner."],
+    ["🌇", "Retour à Bouvines : le calme du village, le bruit des champs, et enfin le canapé. Le meilleur trajet, c'est celui qui finit chez soi."],
     ["🗺️", "Bouvines : ni trop loin, ni trop près. La distance idéale pour dire « j'arrive » dix minutes avant de partir."],
     ["🎓", "Du village de Bouvines à ton futur diplôme : tout commence par un arrêt de bus."],
     ["🏠", "Bienvenue à la maison : le canapé t'attend depuis 8h ce matin."],
@@ -511,6 +519,8 @@ const HELLO = {
     ["🤳", "Ton sac est déjà dans l'entrée. Il t'attend. Il est patient, lui."],
   ],
   weekend: [
+    ["🛒", "Au marché de Bouvines, tu croises toujours quelqu'un que tu connais. Toujours. Prévois le temps de dire bonjour."],
+    ["📢", "Un truc se passe toujours au village. Va jeter un œil à l'onglet 📢 Infos, tu as peut-être une sortie à faire."],
     ["🚲", "Un tour à vélo dans Bouvines le week-end : bon pour les jambes, bon pour le moral."],
     ["🌾", "Bouvines le week-end : le calme du village, et toi qui recharges tes batteries."],
     ["🎉", "C'est le week-end : ton réveil est en congé, toi aussi."],
@@ -525,6 +535,59 @@ const HELLO = {
     ["📅", "Dimanche : le jour où on se promet de faire les devoirs. Spoiler : ce sera à 21h."],
   ],
   tous: [
+    ["🎨", "Les 21 vitraux de ton église ont mis 17 ans à être posés (de 1889 à 1906). Voilà pourquoi tu peux dire que les grandes œuvres prennent du temps."],
+    ["🛡️", "Dans l'église de Bouvines, il y a 173 blasons. Ta trousse en a moins, mais elle a plus de stylos morts."],
+    ["🎹", "L'église de Bouvines a un orgue Mutin-Cavaillé-Coll. Ton casque est plus tendance, mais l'orgue, lui, n'a jamais eu besoin d'être rechargé."],
+    ["📅", "L'église a été consacrée le 25 juillet 1910, deux jours avant l'anniversaire de la bataille. Un sens du timing que ton bus n'a pas."],
+    ["🌍", "Des vitraux de l'église ont été exposés à l'Exposition universelle de Paris avant d'arriver à Bouvines. Ton village a déjà fait le tour du monde."],
+    ["🕰️", "L'église est ouverte tous les jours, même le dimanche. Un exemple de régularité que ton réveil devrait suivre."],
+    ["🏛️", "Les vitraux sont classés depuis 1981 et l'église entière depuis 2010. Une vraie carrière de star du patrimoine."],
+    ["👴", "Félix Dehau a été maire de Bouvines pendant 62 ans, de 1872 à 1934. Un mandat plus long que toute ta scolarité, fac comprise."],
+    ["🗳️", "62 ans de mandat pour le maire Félix Dehau : le vrai record de fidélité au village. Toi, tu es fidèle à ton bus, c'est déjà un début."],
+    ["🚏", "L'arrêt Bouvines Église est rue Félix Dehau, du nom d'un maire resté 62 ans en poste. Toi, tu as juste à tenir jusqu'à la sonnerie."],
+    ["🥬", "La gastronomie locale de Bouvines, c'est l'endive. Non, tu n'es pas obligé d'aimer. Oui, le jambon et le gratin aident beaucoup."],
+    ["🥗", "Ce soir, si c'est gratin d'endives, souviens-toi : tu manges une spécialité locale. Fais comme si tu étais au restaurant."],
+    ["🌱", "L'endive pousse dans le noir, comme toi le lundi matin à 6h30. Et elle finit croquante et fière."],
+    ["🏹", "Chaque année, Bouvines organise une fête médiévale : tir à l'arc, combats à l'épée, marché d'artisans. Ici, on n'a pas besoin de remonter le temps, on habite dedans."],
+    ["⚔️", "La fête médiévale de Bouvines met des dizaines de bénévoles en costume. Ta tenue du lundi matin est aussi un déguisement, mais moins classe."],
+    ["🥚", "À Pâques, il y a une chasse aux œufs à Bouvines. Le seul moment de l'année où chercher quelque chose par terre est un sport officiel."],
+    ["🎆", "Le 14 juillet à Bouvines, tout le village se retrouve. Même ceux qui prétendent détester les foules."],
+    ["👋", "Fête des voisins à Bouvines : le seul événement où tu es obligé de dire bonjour à toute la rue. Entraîne ton sourire."],
+    ["🏮", "Les Allumoirs, c'est la fête d'automne de Bouvines. Une bonne raison de sortir de chez toi quand il fait gris."],
+    ["🎓", "L'école de Bouvines s'appelle Léonard de Vinci. Tu peux te dire un peu polyvalent, ça ne coûte rien."],
+    ["🍽️", "Cantine, garderie, école Léonard de Vinci : le village t'a nourri, gardé et éduqué. Il mérite bien un petit salut au prochain arrêt de bus."],
+    ["🎶", "Il y a une chorale à Bouvines. Pas obligé de chanter, mais le trajet est plus sympa quand tu fredonnes."],
+    ["🤝", "L'Amicale laïque de Bouvines existe pour que les gens se retrouvent. À l'arrêt de bus, c'est gratuit aussi."],
+    ["👑", "En 1214, Philippe Auguste a battu l'empereur Otton IV à Bouvines. Toi, tu bats ta flemme du matin. Même combat, en moins de chevaux."],
+    ["📖", "Guillaume le Breton a raconté la bataille de Bouvines dans sa chronique. Toi, tu la racontes à la récré : même succès garanti."],
+    ["🏁", "Il y a plus de 800 ans, la bataille de Bouvines était gagnée. Depuis, aucun retard de bus n'a été aussi important pour l'Histoire."],
+    ["🧭", "La bataille s'est déroulée à deux kilomètres du village, sur la chaussée Brunehaut. Ton trajet vers l'arrêt est moins glorieux, mais nettement moins dangereux."],
+    ["🏰", "Bouvines, 1214 : victoire de la France. Bouvines, aujourd'hui : victoire d'arriver à l'arrêt avant le bus."],
+    ["📚", "Pas besoin d'aller au musée pour voir l'Histoire : à Bouvines, elle est sous tes chaussures."],
+    ["🧀", "Un marché et une fromagerie au village : tu peux manger local sans quitter Bouvines. Le seul voyage nécessaire, c'est celui du bus."],
+    ["🚜", "Bouvinois, tu sais reconnaître un tracteur au bruit. Un vrai talent, à ajouter sur ton CV."],
+    ["📢", "Il y a aussi des animations pour les ados dans le village : regarde l'onglet 📢 Infos, tu n'as peut-être pas encore vu la dernière."],
+    ["🏡", "Un village de 800 âmes : il n'y a jamais foule dans le bus, mais toujours quelqu'un pour te saluer."],
+    ["🌟", "Dans un village de 800 âmes, tu es forcément quelqu'un de connu. Assume ton statut de star locale."],
+    ["🚶", "À Bouvines, une « longue marche » se compte en minutes jusqu'à l'arrêt. Sois fier de ta condition physique."],
+    ["📞", "Village de 800 âmes : quand tu fais une bêtise, la nouvelle arrive chez toi avant toi. Vive la vie de village."],
+    ["🚴", "Vélo, tracteur ou bus : à Bouvines, il y a un moyen de transport pour chaque humeur."],
+    ["⛪", "L'église de Bouvines a 21 vitraux de 8 mètres de haut : le plus grand écran du village, sans wifi et sans pub."],
+    ["🏛️", "Ton église est classée monument historique depuis 2010. Ton lit du dimanche soir mériterait la même médaille."],
+    ["🔨", "C'est le maire Félix Dehau qui a fait reconstruire l'église en 1880. Toi, tu as juste à reconstruire ta motivation du lundi."],
+    ["⚔️", "En 1214, la bataille s'est jouée à « la Chapelle aux arbres », à deux kilomètres du village. Aujourd'hui, la seule bataille, c'est celle pour la place assise."],
+    ["🛣️", "La chaussée Brunehaut est une vieille route romaine. Elle en a vu passer, des ados en retard."],
+    ["🗺️", "Lille est à environ 15 km : trop loin pour y aller à pied, trop près pour rater le cours."],
+    ["📈", "Bouvines compte à peu près 800 habitants. Statistiquement, tu connais quelqu'un dans chaque maison."],
+    ["🌦️", "Dans le Nord, il n'y a pas de mauvais temps, seulement de mauvais parapluies. Prends le tien."],
+    ["🤗", "Le Nord, c'est comme le bus : parfois en retard, mais toujours chaleureux."],
+    ["🏆", "Bouvines : là où la France a gagné en 1214, et où toi, tu gagnes chaque matin contre ton réveil."],
+    ["📚", "Les 21 vitraux racontent la bataille de 1214 comme une série en 21 épisodes. Sans pub et sans abonnement."],
+    ["🎯", "Un Bouvinois sait faire trois choses : reconnaître le bruit du bus, saluer tout le monde et courir avec son cartable."],
+    ["🚌", "Bouvines Église, Tournebride, Grand Sainghin, 4 Cantons : ce n'est pas un itinéraire, c'est un poème en quatre strophes."],
+    ["🌍", "Bouvinois un jour, Bouvinois toujours : même dans le métro, tu emportes un petit bout de village avec toi."],
+    ["🤷", "À Bouvines, on ne dit pas « je suis en retard », on dit « le bus est parti avant moi »."],
+    ["🌾", "Autour du village, il y a des champs à perte de vue. Rassure-toi : ton bus, lui, sait où il va."],
     ["📜", "Bouvinois, tu habites dans un village qui a son chapitre dans les livres d'histoire. Beaucoup n'ont que leur code postal."],
     ["🚌", "De Bouvines aux 4 Cantons en une douzaine de minutes : plus rapide qu'une armée du Moyen Âge."],
     ["⛪", "Bouvines Église : l'arrêt de bus le plus classe du trajet. Tu peux dire que tu as rendez-vous à l'église."],
@@ -553,14 +616,20 @@ const HELLO = {
     ["✨", "Tu es une légende. Ton bus, lui, est juste en retard de deux minutes."],
   ],
 };
+const LOCAL_SHARE = 0.7;   // part des tirages qui parlent de Bouvines
+const isLocal = m => /bouvin|brunehaut|vitrau|1214|dehau|philippe auguste|village|tracteur|endive|tournebride|bouvibus|4 cantons|léonard|allumoirs/i.test(m[1]);
 function pickHello() {
   const n = new Date(), h = n.getHours(), wd = n.getDay();
   const cat = (wd === 0 || wd === 6) ? "weekend" : h < 10 ? "matin" : h < 17 ? "jour" : "soir";
-  const pool = HELLO[cat].concat(HELLO.tous);
-  let i;
-  do { i = Math.floor(Math.random() * pool.length); } while (pool.length > 1 && (cat + ":" + i) === localStorage_get("helloKey"));
-  try { localStorage.setItem("helloKey", cat + ":" + i); } catch (e) {}
-  const [emo, txt] = pool[i];
+  const all = HELLO[cat].concat(HELLO.tous);
+  const local = all.filter(isLocal), other = all.filter(m => !isLocal(m));
+  let recent = [];
+  try { recent = JSON.parse(localStorage.getItem("helloRecent") || "[]"); } catch (e) {}
+  const fresh = list => { const f = list.filter(m => !recent.includes(m[1])); return f.length ? f : list; };   // évite les répétitions récentes
+  const useLocal = local.length && (Math.random() < LOCAL_SHARE || !other.length);
+  const pool = fresh(useLocal ? local : other);
+  const [emo, txt] = pool[Math.floor(Math.random() * pool.length)];
+  try { localStorage.setItem("helloRecent", JSON.stringify([txt].concat(recent).slice(0, 25))); } catch (e) {}
   $("hello-emo").textContent = emo;
   $("hello-txt").textContent = txt;
 }
