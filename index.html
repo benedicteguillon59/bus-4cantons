@@ -7,7 +7,11 @@
 <meta name="theme-color" content="#4f7053">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icons/icon-192.png">
-<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Bus 4 Cantons">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <style>
   :root {
     --bg:#f2f5f9; --card:#fff; --text:#16202b; --muted:#65727f; --line:#e1e7ee;
@@ -222,6 +226,7 @@
 <footer>
   Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
   <p class="trafficline" id="trafficline"><a href="https://www.ilevia.fr/infos-trafic" target="_blank" rel="noopener">Infos trafic Ilévia</a></p>
+  <p class="trafficline" id="stats-note" hidden>Statistiques de visite anonymes, sans cookie.</p>
   <button id="refresh">Actualiser</button>
 </footer>
 
@@ -665,6 +670,25 @@ document.addEventListener("visibilitychange", () => { if (!document.hidden) load
 setInterval(() => { if (!document.hidden) loadTraffic(); }, 60000);
 loadTraffic();
 
+
+/* ---------- Statistiques de fréquentation anonymes (Cloudflare Web Analytics) ----------
+   Sans cookie, sans donnée personnelle. Désactivé tant qu'aucun jeton n'est renseigné.
+   Renseigner, pour chaque adresse où l'appli est publiée, le jeton fourni par Cloudflare
+   (Analytics & Logs > Web Analytics > le site > « Manage site » / extrait de code). */
+const CF_ANALYTICS = {
+  "bus-4-cantons.pages.dev": "4a75923c5f4f4eb28cf88102ac3d2a4b",
+  // "votre-pseudo.github.io": "COLLER_LE_JETON_ICI",
+};
+(function () {
+  const token = CF_ANALYTICS[location.hostname];
+  if (!token || navigator.doNotTrack === "1") return;          // pas de jeton, ou visiteur qui refuse le suivi
+  const s = document.createElement("script");
+  s.defer = true;
+  s.src = "https://static.cloudflareinsights.com/beacon.min.js";
+  s.setAttribute("data-cf-beacon", JSON.stringify({ token }));
+  document.head.appendChild(s);
+  const note = $("stats-note"); if (note) note.hidden = false;
+})();
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }
