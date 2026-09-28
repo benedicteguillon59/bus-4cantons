@@ -227,6 +227,19 @@
     .tabs button { padding-top:10px; padding-bottom:10px; }
     .tabs #tab-info { flex:0 0 120px; }
   }
+  /* Météo à Bouvines, à côté du mot du jour */
+  .hellorow { display:flex; gap:8px; align-items:stretch; margin:0 0 12px; }
+  .hellorow .hello { flex:1 1 auto; min-width:0; margin:0; }
+  .meteo { flex:0 0 78px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; padding:8px 6px; background:var(--card); border-radius:18px; box-shadow:0 2px 8px rgba(50,70,45,.1); text-align:center; line-height:1.15; }
+  .meteo[hidden] { display:none; }
+  .meteo .m-ico { font-size:1.7rem; line-height:1; }
+  .meteo .m-t { font-weight:800; font-size:1.3rem; }
+  .meteo .m-l { font-size:.72rem; color:var(--muted); }
+  .meteo .m-r { margin-top:2px; font-size:.72rem; font-weight:700; color:var(--brand); }
+  .meteo .m-r:empty { display:none; }
+  .hellorow .hello { gap:9px; padding:8px 10px; }
+  .hellorow .hello .emo { font-size:1.45rem; }
+  .hellorow .hello p span { font-size:.92rem; line-height:1.3; }
 </style>
 </head>
 <body>
@@ -246,7 +259,12 @@
 </header>
 <main>
   <div id="traffic" role="status"></div>
-  <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Le mot du jour</b><span id="hello-txt"></span></p></div>
+  <div class="hellorow">
+    <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Le mot du jour</b><span id="hello-txt"></span></p></div>
+    <div class="meteo" id="meteo" hidden role="img" aria-label="Météo à Bouvines">
+      <span class="m-ico" id="m-ico"></span><span class="m-t" id="m-t"></span><span class="m-l" id="m-l"></span><span class="m-r" id="m-r"></span>
+    </div>
+  </div>
   <div id="alert" role="status"></div>
   <div class="vac" id="vac"></div>
   <div id="notice"></div>
@@ -267,7 +285,7 @@
   <button class="share" id="share">📤 Envoyer les prochains bus sur WhatsApp</button>
 </main>
 <footer>
-  Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
+  Données : Région Hauts-de-France (open data), lignes 854 et 870. Météo : <a href="https://open-meteo.com/" target="_blank" rel="noopener">Open-Meteo.com</a>.<br>
   <p class="trafficline" id="trafficline"><a href="https://www.ilevia.fr/infos-trafic" target="_blank" rel="noopener">Infos trafic Ilévia</a></p>
   <button id="refresh">Actualiser</button>
 </footer>
@@ -845,6 +863,65 @@ function renderMairie() {
       }).join("")
     : `<li class="pnone">Aucune info publiée ces deux dernières semaines.</li>`;
 }
+
+/* ---------- Météo à Bouvines (Open-Meteo : sans clé, sans cookie ; coordonnées fixes du village) ---------- */
+const METEO_URL = "https://api.open-meteo.com/v1/forecast?latitude=50.5786&longitude=3.1873&current=temperature_2m,weather_code,is_day&hourly=precipitation_probability&daily=temperature_2m_min,temperature_2m_max&timezone=Europe%2FParis&forecast_days=2";
+const METEO_FRESH = 20 * 60e3, METEO_STALE = 3 * 3600e3;
+
+function wmo(c, day) {                                   // code météo WMO -> [émoji, libellé]
+  if (c === 0) return day ? ["☀️", "Dégagé"] : ["🌙", "Dégagé"];
+  if (c === 1) return day ? ["🌤️", "Éclaircies"] : ["🌙", "Éclaircies"];
+  if (c === 2) return ["⛅", "Nuageux"];
+  if (c === 3) return ["☁️", "Couvert"];
+  if (c === 45 || c === 48) return ["🌫️", "Brouillard"];
+  if (c >= 51 && c <= 57) return ["🌦️", "Bruine"];
+  if (c >= 80 && c <= 82) return ["🌦️", "Averses"];
+  if (c >= 61 && c <= 67) return ["🌧️", "Pluie"];
+  if ((c >= 71 && c <= 77) || c === 85 || c === 86) return ["🌨️", "Neige"];
+  if (c >= 95) return ["⛈️", "Orage"];
+  return ["🌡️", "Météo"];
+}
+function rainNext6h(d) {                                 // probabilité de pluie maximale sur les 6 prochaines heures
+  const hour = d.current.time.slice(0, 13);
+  const i = d.hourly.time.findIndex(t => t.slice(0, 13) === hour);
+  if (i < 0) return null;
+  const v = d.hourly.precipitation_probability.slice(i, i + 7).filter(x => x != null);
+  return v.length ? Math.max(...v) : null;
+}
+function renderMeteo(d) {
+  const el = $("meteo");
+  try {
+    const c = d.current, [ico, lab] = wmo(c.weather_code, c.is_day === 1);
+    const t = Math.round(c.temperature_2m), r = rainNext6h(d);
+    $("m-ico").textContent = ico;
+    $("m-t").textContent = t + "°";
+    $("m-l").textContent = lab;
+    $("m-r").textContent = r == null ? "" : "💧 " + r + " %";
+    const mm = d.daily ? ` (min ${Math.round(d.daily.temperature_2m_min[0])}°, max ${Math.round(d.daily.temperature_2m_max[0])}°)` : "";
+    el.title = `Bouvines : ${t}°, ${lab}${mm}` + (r == null ? "" : `, risque de pluie ${r} % d'ici 6 h`);
+    el.setAttribute("aria-label", el.title);
+    el.hidden = false;
+  } catch (e) { el.hidden = true; }
+}
+async function loadMeteo() {
+  let cached = null;
+  try { cached = JSON.parse(localStorage.getItem("meteo") || "null"); } catch (e) {}
+  const age = cached ? Date.now() - cached.t : Infinity;
+  if (cached && age < METEO_STALE) renderMeteo(cached.d);          // affichage immédiat, même hors connexion
+  if (age < METEO_FRESH) return;
+  try {
+    const ctl = new AbortController(), to = setTimeout(() => ctl.abort(), 8000);
+    const r = await fetch(METEO_URL, { signal: ctl.signal });
+    clearTimeout(to);
+    if (!r.ok) throw new Error(r.status);
+    const d = await r.json();
+    renderMeteo(d);
+    try { localStorage.setItem("meteo", JSON.stringify({ t: Date.now(), d })); } catch (e) {}
+  } catch (e) { if (!cached || age >= METEO_STALE) $("meteo").hidden = true; }
+}
+document.addEventListener("visibilitychange", () => { if (!document.hidden) loadMeteo(); });
+setInterval(() => { if (!document.hidden) loadMeteo(); }, 30 * 60e3);
+loadMeteo();
 
 /* Sur toute adresse autre que la nouvelle (hors tests en local), on invite à passer sur la nouvelle. */
 const NEW_HOST = "bouvibus.pages.dev";
