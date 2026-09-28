@@ -226,7 +226,6 @@
 <footer>
   Données : Région Hauts-de-France (open data), lignes 854 et 870.<br>
   <p class="trafficline" id="trafficline"><a href="https://www.ilevia.fr/infos-trafic" target="_blank" rel="noopener">Infos trafic Ilévia</a></p>
-  <p class="trafficline" id="stats-note" hidden>Statistiques de visite anonymes, sans cookie.</p>
   <button id="refresh">Actualiser</button>
 </footer>
 
@@ -687,7 +686,6 @@ const CF_ANALYTICS = {
   s.src = "https://static.cloudflareinsights.com/beacon.min.js";
   s.setAttribute("data-cf-beacon", JSON.stringify({ token }));
   document.head.appendChild(s);
-  const note = $("stats-note"); if (note) note.hidden = false;
 })();
 
 (async function init() {
