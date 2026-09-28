@@ -11,6 +11,7 @@ import io
 import re
 import json
 import sys
+import time
 import urllib.parse
 import urllib.request
 import zipfile
@@ -128,12 +129,21 @@ FLEXITY_CQ_STOPS = {"4CA001", "4CA002", "4CA003", "4CA005", "4CA098", "4CA099"}
 
 
 def flexity_data(first_day):
-    try:
-        req = urllib.request.Request(FLEXITY_GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
-        with urllib.request.urlopen(req, timeout=120) as r:
-            z = zipfile.ZipFile(io.BytesIO(r.read()))
-    except Exception as e:
-        print("Navette Flexity indisponible :", e, file=sys.stderr)
+    z = None
+    for attempt in range(1, 4):
+        try:
+            req = urllib.request.Request(FLEXITY_GTFS_URL, headers={
+                "User-Agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36",
+                "Accept": "application/zip,application/octet-stream,*/*",
+                "Accept-Language": "fr-FR,fr;q=0.9",
+            })
+            with urllib.request.urlopen(req, timeout=120) as r:
+                z = zipfile.ZipFile(io.BytesIO(r.read()))
+            break
+        except Exception as e:
+            print(f"Navette Flexity : essai {attempt}/3 échoué : {e}", file=sys.stderr)
+            time.sleep(5 * attempt)
+    if z is None:
         return None
 
     place_of = {s: p for p, v in FLEXITY_PLACES.items() for s in v["stops"]}
@@ -239,6 +249,16 @@ def panneaupocket_posts(today):
             "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds")}
 
 
+
+def previous_section(key):
+    """Section `key` du data.json existant (dernière version enregistrée), ou None."""
+    try:
+        with open("data.json", encoding="utf-8") as f:
+            return json.load(f).get(key)
+    except Exception:
+        return None
+
+
 def main():
     print("Téléchargement du GTFS régional…", file=sys.stderr)
     req = urllib.request.Request(GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
@@ -317,6 +337,14 @@ def main():
         "flexity": flexity_data(date.today() - timedelta(days=2)),
         "panneau": panneaupocket_posts(date.today()),
     }
+    # Si une source annexe est indisponible (ex. site bloquant les serveurs de GitHub), on garde
+    # la dernière version connue plutôt que d'effacer la section.
+    for key in ("flexity", "holidays", "panneau"):
+        if not out.get(key):
+            old = previous_section(key)
+            if old:
+                print(f"« {key} » indisponible : on conserve la version précédente de data.json", file=sys.stderr)
+                out[key] = old
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
     print(f"OK : {len(items['to'])} départs vers 4 Cantons, {len(items['from'])} depuis 4 Cantons, "

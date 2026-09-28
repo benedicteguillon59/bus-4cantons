@@ -220,6 +220,13 @@
   /* Bandeau « nouvelle adresse » (affiché seulement sur les anciennes adresses) */
   #newaddr { background:var(--coral); color:#fff; padding:10px 16px; font-size:.9rem; line-height:1.4; text-align:center; }
   #newaddr a { color:#fff; font-weight:800; text-decoration:underline; }
+  /* Grand écran : l'en-tête garde la même largeur que la liste, et le bouton Infos une taille correcte */
+  header h1, header .tabs, header .when-bar { max-width:608px; margin-left:auto; margin-right:auto; }   /* = largeur de la liste (640 - 2x16) */
+  header h1 { margin-bottom:10px; }
+  @media (min-width: 520px) {
+    .tabs button { padding-top:10px; padding-bottom:10px; }
+    .tabs #tab-info { flex:0 0 120px; }
+  }
 </style>
 </head>
 <body>
