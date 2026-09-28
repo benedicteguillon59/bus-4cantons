@@ -124,7 +124,7 @@
   /* Bandeau du haut : uni, sans dégradé */
   header { background:var(--card); backdrop-filter:none; }
   @media (prefers-color-scheme: dark) { header { background:var(--card); } }
-  /* Couleurs unies (sans dégradé) pour les boutons, l'alerte et le mot pour Margaux */
+  /* Couleurs unies (sans dégradé) pour les boutons, l'alerte et le mot du jour */
   .tabs button[aria-pressed="true"] { background:var(--violet); }
   .hello { background:#dff7ee; }
   @media (prefers-color-scheme: dark) { .hello { background:#1f3d38; } }
@@ -191,6 +191,32 @@
   .flexity-btns { display:flex; gap:8px; flex-wrap:wrap; }
   .flexity-btns a { flex:1 1 100%; text-align:center; text-decoration:none; border-radius:12px; padding:12px 10px; font-weight:700; font-size:.95rem; }
   .flexity-call { background:var(--brand); color:var(--brand-text); }
+  /* Infos de la mairie de Bouvines (PanneauPocket) */
+  #mairie { margin:14px 0; background:var(--card); border-radius:16px; padding:14px; box-shadow:0 2px 8px rgba(50,70,45,.1); }
+  #mairie h2 { margin:0 0 8px; font-size:1rem; }
+  #mairie ul { gap:0; }
+  #mairie li { display:block; background:none; box-shadow:none; border-left:0; border-top:1px solid var(--line); border-radius:0; padding:9px 0; animation:none; }
+  #mairie li:first-child { border-top:0; }
+  #mairie a.post { color:var(--text); font-weight:700; text-decoration:none; }
+  #mairie .pdate { color:var(--muted); font-size:.8rem; display:block; margin-top:1px; }
+  #mairie .pado { background:var(--coral); color:#fff; border-radius:99px; padding:1px 8px; font-size:.7rem; font-weight:800; margin-left:6px; vertical-align:1px; }
+  #mairie .pall { display:block; text-align:center; text-decoration:none; margin-top:8px; padding:10px; border-radius:12px; background:var(--mint); color:var(--text); font-weight:700; font-size:.9rem; }
+  /* Boutons de sens : visibles (plus de fond blanc) + 3e bouton « Infos » */
+  .tabs { display:flex; gap:8px; }
+  .tabs button { flex:1 1 0; min-width:0; }
+  .tabs button:not([aria-pressed="true"]) { background:var(--mint); border-color:var(--brand); color:var(--text); }
+  .tabs button:not([aria-pressed="true"]) small { color:var(--text); opacity:.75; }
+  .when-bar button:not([aria-pressed="true"]) { background:var(--mint); border-color:var(--brand); color:var(--text); }
+  .tabs #tab-info { flex:0 0 80px; padding-left:4px; padding-right:4px; background:var(--coral); border-color:var(--coral); color:#fff; }
+  .tabs #tab-info small { color:#fff; opacity:.92; }
+  .tabs #tab-info[aria-pressed="true"] { outline:3px solid var(--brand); outline-offset:1px; }
+  #mairie h2 small { font-weight:500; color:var(--muted); font-size:.75rem; }
+  #mairie .pnone { color:var(--muted); font-size:.9rem; }
+  /* Vue « Infos » : on masque les horaires, on montre les infos de Bouvines */
+  #mairie { display:none; }
+  body.view-info #mairie { display:block; }
+  body.view-info #list, body.view-info #flexity, body.view-info #share, body.view-info #notice,
+  body.view-info #vac, body.view-info #alert, body.view-info .when-bar { display:none !important; }
 </style>
 </head>
 <body>
@@ -199,6 +225,7 @@
   <div class="tabs" role="group" aria-label="Sens du trajet">
     <button id="tab-to"   aria-pressed="true">Bouvines / Tournebride<small>→ 4 Cantons</small></button>
     <button id="tab-from" aria-pressed="false">4 Cantons<small>→ Bouvines / Tournebride</small></button>
+    <button id="tab-info" aria-pressed="false" hidden>📢 Infos<small>Bouvines</small></button>
   </div>
   <div class="when-bar">
     <button id="btn-now" aria-pressed="true">Maintenant</button>
@@ -208,7 +235,7 @@
 </header>
 <main>
   <div id="traffic" role="status"></div>
-  <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Pour Margaux</b><span id="hello-txt"></span></p></div>
+  <div class="hello" id="hello" title="Touche pour un autre message"><span class="emo" id="hello-emo"></span><p><b>Le mot du jour</b><span id="hello-txt"></span></p></div>
   <div id="alert" role="status"></div>
   <div class="vac" id="vac"></div>
   <div id="notice"></div>
@@ -220,6 +247,11 @@
     <div class="flexity-btns">
       <a class="flexity-call" href="tel:0320404040">📞 03 20 40 40 40 — Appeler pour réserver</a>
     </div>
+  </section>
+  <section id="mairie" aria-label="Infos de la mairie de Bouvines">
+    <h2>📢 Infos de Bouvines <small>(moins de 2 semaines)</small></h2>
+    <ul id="mairie-list"></ul>
+    <a class="pall" id="mairie-all" href="https://app.panneaupocket.com/ville/16409907-bouvines-59830" target="_blank" rel="noopener">Toutes les infos sur PanneauPocket</a>
   </section>
   <button class="share" id="share">📤 Envoyer les prochains bus sur WhatsApp</button>
 </main>
@@ -325,8 +357,11 @@ function render() {
   if (!DATA) return;
   const now = refTime();
   const real = new Date();
-  $("tab-to").setAttribute("aria-pressed", dir === "to");
-  $("tab-from").setAttribute("aria-pressed", dir === "from");
+  renderMairie();
+  $("tab-to").setAttribute("aria-pressed", view === "bus" && dir === "to");
+  $("tab-from").setAttribute("aria-pressed", view === "bus" && dir === "from");
+  $("tab-info").setAttribute("aria-pressed", view === "info");
+  document.body.classList.toggle("view-info", view === "info");
 
   const notices = [];
   if (ymd(now) > DATA.validTo) notices.push("Les horaires enregistrés sont périmés : ouvrez l'appli avec du réseau pour les mettre à jour.");
@@ -387,7 +422,10 @@ $("btn-now").onclick = () => setCustom(false);
 $("btn-custom").onclick = () => setCustom(true);
 $("in-date").onchange = $("in-time").onchange = () => { custom = true; render(); };
 
+let view = "bus";          // "bus" = horaires, "info" = infos de Bouvines
+
 function setDir(d) {
+  view = "bus";
   dir = d;
   try { localStorage.setItem("dir", d); } catch (e) {}
   render();
@@ -395,97 +433,113 @@ function setDir(d) {
 
 $("tab-to").onclick = () => setDir("to");
 $("tab-from").onclick = () => setDir("from");
+$("tab-info").onclick = () => { view = "info"; render(); window.scrollTo(0, 0); };
 $("refresh").onclick = async () => { try { await loadSchedule(); } catch (e) {} render(); loadTraffic(); };
 
 document.addEventListener("visibilitychange", () => { if (!document.hidden) render(); });
 setInterval(render, 15000);                                   // met à jour les « dans X min »
 
 
-/* ---------- Petit mot pour Margaux (change à chaque ouverture) ---------- */
+/* ---------- Le mot du jour (change à chaque ouverture) ---------- */
 const HELLO = {
   matin: [
-    ["🧣", "Mets ton écharpe, ma chérie ! Il fait plus frais qu'on ne le croit."],
-    ["🥣", "As-tu bien mangé ton petit-déjeuner ? Un ventre vide, ça fait des idées noires."],
-    ["🚌", "Le bus part à l'heure, et il ne t'attendra pas si tu traînes devant le miroir."],
-    ["🎒", "As-tu pris ton sac, ton cahier, ton téléphone chargé et ton plus beau sourire ?"],
-    ["🌞", "Debout là-dedans ! Le soleil s'est levé pour toi, la moindre des politesses c'est de lui répondre."],
-    ["🧤", "Prends une veste, on ne sait jamais. De mon temps, on attrapait froid pour moins que ça."],
-    ["📚", "Aujourd'hui tu apprends quelque chose de nouveau. Et ce soir tu me raconteras, promis ?"],
-    ["🍎", "Une pomme dans le sac, c'est comme un petit câlin de Mamie pour la récré."],
-    ["💤", "Je sais, le lit était trop bon. Mais le lycée ne va pas se faire tout seul."],
-    ["👵", "Une lycéenne qui prend le bus toute seule, si ta mamie voyait ça ! Attends... c'est moi. Bravo ma puce !"],
-    ["🐓", "Le coq a chanté depuis longtemps. Toi aussi, tu peux te lever !"],
-    ["🎀", "Bien coiffée, bien réveillée : on ne dirait jamais que tu t'es couchée tard."],
-    ["🧦", "Vérifie que tes chaussettes sont assorties. On a toutes vécu ça, ce n'est pas grave."],
-    ["✨", "Aujourd'hui, ce sera une belle journée. Mamie l'a décidé, donc c'est comme ça."],
-    ["🌂", "Regarde le ciel avant de sortir : un parapluie, ça ne pèse pas lourd."],
+    ["⚔️", "Bataille de Bouvines, 1214 : Philippe Auguste a gagné. Ta bataille du jour : le réveil. Tu gères."],
+    ["🚌", "Église, Tournebride, Grand Sainghin, 4 Cantons : tu connais le trajet par cœur. La seule vraie question, c'est l'heure."],
+    ["😴", "Le bouton « snooze » n'est pas un projet d'avenir. Debout, le bus, lui, ne fait pas de snooze."],
+    ["🚌", "Loi de Murphy : le bus part toujours pile quand tu arrives en courant. Sois plus rapide que Murphy."],
+    ["🎧", "Playlist du matin : lancée. Bus : repéré. Cerveau : chargement… 12 %."],
+    ["🎒", "Check rapide : sac, carte de bus, téléphone chargé, cerveau. Trois sur quatre, ça passe."],
+    ["☀️", "Objectif de la matinée : arriver à l'heure sans avoir l'air d'avoir couru."],
+    ["🥐", "Petit-déj ou pas petit-déj ? Réponse officielle : oui. Un cours de 8h ne se fait pas le ventre vide."],
+    ["⏰", "Ton réveil a sonné quatre fois. Il ne te déteste pas, il tient juste à toi."],
+    ["🧥", "Dehors, il fait plus froid que dans ton lit. Prends une veste, choisis la survie."],
+    ["💤", "Fun fact : le toi de 22h avait promis de se coucher tôt. Il a menti."],
+    ["🧠", "Ton cerveau charge : 47 %. Largement assez pour le premier cours."],
+    ["🧃", "Journée sponsorisée par : ton sac trop lourd, tes écouteurs emmêlés et ton envie de dormir."],
+    ["🐌", "Tu peux avancer au ralenti, mais pas plus lentement que la file de la cantine."],
+    ["🌦️", "Météo : nuageux dehors, nuageux dans ta tête. Le bus, lui, est au rendez-vous."],
+    ["📚", "Aujourd'hui, il y aura un cours, un contrôle ou une surprise. Tu as déjà survécu à pire."],
+    ["🚀", "Nouvelle journée, nouveau défi : arriver au premier cours avant que le prof ferme la porte."],
   ],
   jour: [
-    ["📖", "Écoute bien la prof, ma chérie. Et si tu ne comprends pas, lève la main, il n'y a pas de honte."],
-    ["🍫", "Un petit carré de chocolat pour tenir jusqu'au goûter ? Mamie n'a rien vu."],
-    ["🧠", "Tu as une bonne tête, ma Margaux. Sers-t'en, mais pas trop fort, elle a besoin de repos."],
-    ["👀", "Ne regarde pas trop ton téléphone en cours, hein. Je le saurai, j'ai mes informateurs."],
-    ["🍽️", "As-tu mangé à la cantine ? Une jeune fille, ça doit manger des légumes."],
-    ["🕐", "Le temps passe vite quand on s'amuse, mais encore plus vite quand on est en retard."],
-    ["🤓", "Les notes, ce n'est pas tout. Le principal, c'est d'avoir fait de son mieux et d'avoir ri un peu."],
-    ["🎨", "À ton âge, j'avais déjà de grandes idées. Toi, tu en as de meilleures, j'en suis sûre."],
-    ["🥪", "Le ventre qui gargouille, c'est le signe qu'il est l'heure de manger. Ne le fais pas attendre."],
-    ["📝", "Écris lisiblement, ma chérie. Même les profs ont le droit d'être contents."],
-    ["🫶", "Sois gentille avec tes camarades, et un peu moins gentille avec ceux qui ne le méritent pas."],
-    ["😄", "Un rire par jour, c'est la meilleure médecine. Trouves-en un aujourd'hui."],
-    ["💧", "Bois de l'eau, ma puce. Pas seulement du sirop ou des boissons en canette."],
-    ["🚶‍♀️", "Marche droit et regarde devant toi : les jolies filles n'ont pas besoin de regarder leurs pieds."],
+    ["📜", "Au prochain cours sur Philippe Auguste, tu peux dire « c'était chez moi ». Effet garanti."],
+    ["🏰", "Depuis 1214, Bouvines est célèbre pour une bataille. Aujourd'hui, la seule bataille : celle pour une place assise dans le bus."],
+    ["🏫", "Si on te demande d'où tu viens, réponds « du village de la fameuse bataille ». Personne ne sait quoi répondre."],
+    ["📶", "Le wifi du lycée est le vrai boss final. Personne ne l'a jamais battu."],
+    ["📝", "Contrôle aujourd'hui ? Écris ton nom en premier : c'est déjà un début."],
+    ["🍟", "Menu de la cantine : ça dépend de ta chance. Croise les doigts pour les frites."],
+    ["🕐", "Les cinq dernières minutes d'un cours durent plus longtemps que tout le reste du cours. C'est scientifique."],
+    ["✏️", "Le stylo qui n'a plus d'encre juste avant l'interro a un sens de l'humour très particulier."],
+    ["🧠", "Ton cerveau à 14h : « Je suis en mode économie d'énergie. » Compréhensible."],
+    ["🎒", "Ton sac pèse le poids de ta dignité, plus trois manuels que tu n'ouvriras pas."],
+    ["🤫", "Au CDI, ton téléphone a intérêt à être en silencieux. Tout le monde se souvient de la dernière sonnerie."],
+    ["🏃", "Le cours d'EPS, c'est quand ton corps se demande pourquoi tu lui fais ça."],
+    ["😂", "Un fou rire en plein cours est toujours autorisé. Sauf quand le prof regarde. Et le prof regarde toujours."],
+    ["🔔", "La sonnerie de la récré est ta chanson préférée depuis 8h."],
+    ["📱", "Téléphone à 12 % : il faut choisir entre la musique et le retour en bus. Choisis le bus."],
+    ["🥪", "Si ton sandwich est écrasé dans le sac, il a juste pris la forme de ta journée."],
+    ["🌟", "Ce que tu fais aujourd'hui, ton futur toi te dira merci. Ou « bof, ça va ». C'est déjà bien."],
   ],
   soir: [
-    ["🏡", "Te voilà rentrée ! As-tu passé une bonne journée ? Raconte tout à Mamie."],
-    ["🍲", "Ce soir, on mange un bon repas chaud. Après une journée de lycée, tu l'as bien mérité."],
-    ["🧦", "Enlève tes chaussures, mets des chaussons et reprends des forces."],
-    ["📵", "Repose ton téléphone une petite heure. Tes yeux n'ont pas besoin de tant d'écran."],
-    ["🛁", "Un bon bain chaud, une histoire qui te plaît, et hop, direction les bras de Morphée."],
-    ["📚", "Les devoirs d'abord, les écrans ensuite. C'est la règle de Mamie, elle marche depuis toujours."],
-    ["🌙", "Ne te couche pas trop tard. Le sommeil, c'est la moitié de la réussite."],
-    ["☕", "Une petite tisane, un plaid, et le monde te semblera plus doux."],
-    ["🧶", "Une journée de plus bien remplie ! Tu es une vraie championne."],
-    ["❤️", "Je pense à toi, ma chérie. Tu es la plus jolie petite-fille du monde, mais ne le répète pas aux autres."],
-    ["🍰", "Un petit bout de gâteau avant de dormir ? Mamie a peut-être un secret dans le placard."],
-    ["🛏️", "Ton lit t'attend depuis ce matin. Ne le fais pas patienter davantage."],
-    ["🌟", "Demain sera un autre jour, et il sera aussi bien que celui-ci. Dors bien."],
-    ["📞", "Un petit coup de fil à Mamie ce soir ? Elle adore quand tu lui racontes ta journée."],
-    ["🥰", "Bonne soirée, ma puce. Ne rentre jamais trop tard, et prends soin de toi."],
+    ["🗺️", "Bouvines : ni trop loin, ni trop près. La distance idéale pour dire « j'arrive » dix minutes avant de partir."],
+    ["🎓", "Du village de Bouvines à ton futur diplôme : tout commence par un arrêt de bus."],
+    ["🏠", "Bienvenue à la maison : le canapé t'attend depuis 8h ce matin."],
+    ["🔋", "Batterie du téléphone : 3 %. Batterie de toi : 2 %. Pense à te brancher, toi aussi."],
+    ["🍕", "Menu du soir : ce qu'il y a dans le frigo, plus un peu d'imagination."],
+    ["📚", "Devoirs d'abord, série ensuite. Ou série d'abord, devoirs à 22h en panique. On connaît la fin."],
+    ["🎮", "« Une partie rapide » : trois heures plus tard, on y est encore."],
+    ["🛌", "Ton lit t'a manqué. Il te fait un gros câlin de matelas."],
+    ["🌙", "Éteins l'écran quinze minutes avant de dormir. Ton futur toi te dira merci (et ses cernes aussi)."],
+    ["🔌", "Le vrai sport de ce soir : retrouver le chargeur qui marche encore."],
+    ["🍿", "Fais-toi plaisir avec un épisode ou deux, mais pas jusqu'à deux heures du matin."],
+    ["🧦", "Enlève les chaussures, mets tes chaussettes préférées, respire. Le lycée attendra demain."],
+    ["💪", "Tu as survécu à toute une journée. Statistiquement, c'est de l'héroïsme."],
+    ["🥤", "Un verre d'eau, puis un snack. Dans cet ordre, ça fait sérieux."],
+    ["🎵", "Playlist, porte fermée, dix minutes de concert dans ta chambre : c'est officiellement du repos."],
+    ["💭", "Demain est une page blanche. Enfin, une page avec un cours de maths à 8h, mais blanche quand même."],
+    ["🤳", "Ton sac est déjà dans l'entrée. Il t'attend. Il est patient, lui."],
   ],
   weekend: [
-    ["🎉", "C'est le week-end ! Profite, ma chérie, mais n'oublie pas de manger correctement."],
-    ["🛌", "Grasse matinée autorisée. Un peu. Pas jusqu'à quatre heures de l'après-midi."],
-    ["🛍️", "Une sortie en ville ? Prends un bon manteau, ne rentre pas trop tard et donne des nouvelles."],
-    ["🍪", "Le week-end, on peut faire des gâteaux. Et les manger. Surtout les manger."],
-    ["🎬", "Un bon film, un plaid et des amis : la recette du bonheur, selon Mamie."],
-    ["🌳", "Un petit tour dehors te fera du bien. L'air frais, ça remet les idées en place."],
-    ["👭", "Amuse-toi bien avec tes copines. Mais pas de bêtises, ou alors de toutes petites."],
-    ["📞", "Le dimanche, c'est le jour où on appelle sa grand-mère. Juste pour dire bonjour."],
-    ["🧺", "Un peu d'aide à la maison, ça n'a jamais fait de mal. Et Mamie sera contente."],
-    ["☀️", "Deux jours sans lycée ! Profites-en comme il se doit."],
+    ["🚲", "Un tour à vélo dans Bouvines le week-end : bon pour les jambes, bon pour le moral."],
+    ["🌾", "Bouvines le week-end : le calme du village, et toi qui recharges tes batteries."],
+    ["🎉", "C'est le week-end : ton réveil est en congé, toi aussi."],
+    ["🛌", "Grasse mat' autorisée. Jusqu'à midi, c'est de la récupération. Après, c'est du talent."],
+    ["🍔", "Programme du week-end : dormir, manger, recommencer. Ajoute des amis pour varier."],
+    ["📵", "Mission facultative : une heure sans écran. Difficulté : boss final."],
+    ["🎬", "Un film, un plaid, un paquet de chips : le triangle du bonheur."],
+    ["🛍️", "Sortie en ville ? Vérifie l'heure du dernier bus avant de partir (l'appli est là pour ça)."],
+    ["🧹", "Ranger ta chambre : quête secondaire. Récompense possible : retrouver le truc que tu cherches depuis trois semaines."],
+    ["🌳", "Un petit tour dehors : ton cerveau te dira merci. Ton téléphone aussi, il pourra se reposer."],
+    ["👯", "Week-end entre amis : le meilleur souvenir sera sûrement un fou rire sans raison."],
+    ["📅", "Dimanche : le jour où on se promet de faire les devoirs. Spoiler : ce sera à 21h."],
   ],
   tous: [
-    ["👵", "De mon temps, on faisait des kilomètres à pied pour aller à l'école. Toi, tu as le bus : profite !"],
-    ["🍀", "Un trèfle à quatre feuilles, ça porte bonheur. Mais un bon sourire, c'est encore mieux."],
-    ["🦋", "Tu es en train de devenir une belle jeune femme. Je suis fière de toi, ma Margaux."],
-    ["🎁", "Le plus beau cadeau, c'est de te voir grandir. Le reste, c'est du bonus."],
-    ["🧡", "Quoi qu'il arrive, Mamie est là. Toujours. Même quand tu pars au lycée."],
-    ["🕰️", "Quinze ans déjà ! Hier tu jouais à la poupée, aujourd'hui tu as un abonnement de bus."],
-    ["🙌", "Ne te compare pas aux autres, ma chérie. Tu es un modèle unique, pas une photocopie."],
-    ["🐢", "La tortue arrive toujours à destination. Pas besoin de courir tout le temps."],
-    ["🌷", "Il faut du temps pour que les fleurs poussent. Sois patiente avec toi-même."],
-    ["🧵", "Un point à la fois, on finit toujours par terminer sa broderie. Et sa journée aussi."],
-    ["🍬", "Il y a toujours des bonbons au fond de mon sac. Tu le sais, tu n'as qu'à demander."],
-    ["😉", "Mamie a des yeux dans le dos. Mais elle a surtout une grande confiance en toi."],
-    ["🌍", "Le monde est grand, ma puce. Va le voir, mais donne des nouvelles !"],
-    ["🥇", "Tu es la championne de ma vie. Même si tu rates ton bus."],
-    ["🗝️", "Le secret d'une bonne vie : de bons amis, de bons repas et un peu de sieste."],
-    ["💌", "Un jour, tu me diras merci de t'avoir dit tout ça. En attendant, mets ton bonnet !"],
-    ["🐿️", "Petit à petit, l'écureuil fait son nid. Petit à petit, tu feras de grandes choses."],
-    ["🎂", "Tu as toute la vie devant toi, ma Margaux, et Mamie a tout le temps de te regarder l'attraper."],
-    ["📅", "Chaque jour, une nouvelle occasion de rire. Ne la laisse pas passer."],
-    ["🤗", "Un gros câlin de Mamie, à emporter dans le bus."],
+    ["📜", "Bouvinois, tu habites dans un village qui a son chapitre dans les livres d'histoire. Beaucoup n'ont que leur code postal."],
+    ["🚌", "De Bouvines aux 4 Cantons en une douzaine de minutes : plus rapide qu'une armée du Moyen Âge."],
+    ["⛪", "Bouvines Église : l'arrêt de bus le plus classe du trajet. Tu peux dire que tu as rendez-vous à l'église."],
+    ["🧭", "Bouvines, 4 Cantons, puis toute la métropole : tout le monde est accessible depuis ton arrêt de bus."],
+    ["⚔️", "27 juillet 1214 : bataille de Bouvines. Le jour où ton village est entré dans le cours d'histoire de tout le monde."],
+    ["🤝", "Entre potes de Bouvines, il y a toujours quelqu'un pour dire « c'est ici, la bataille ». Laisse-le finir, il est fier."],
+    ["😎", "Tu es plus fort que ton réveil, ton sac lourd et le bus réunis."],
+    ["🦄", "Sois toi-même. Les autres rôles sont déjà pris, et ils sont moins bien."],
+    ["🎯", "Objectif du jour : arriver à l'heure, survivre, rire au moins une fois."],
+    ["🎒", "La vie, c'est comme un sac de cours : lourd, mais on s'y habitue. Et il y a toujours un truc oublié au fond."],
+    ["🕰️", "Fun fact : tu as réussi 100 % de tes journées difficiles jusqu'ici. Beau score."],
+    ["🍀", "Un peu de chance ne fait pas de mal. La tienne arrive, à pied, mais elle arrive."],
+    ["🤔", "Question philosophique du jour : le bus est-il en retard, ou est-ce toi qui es en avance sur ton retard ?"],
+    ["🔥", "Pas besoin d'être parfait. Il suffit d'être là, avec ton meilleur sourire de lundi matin."],
+    ["🐱", "Un chat n'a jamais raté un bus. Il n'en prend pas. Inspire-toi de sa sérénité."],
+    ["🍪", "Petit rappel : tu es quelqu'un de bien, et tu mérites un biscuit. Aujourd'hui, c'est officiel."],
+    ["🌈", "Après la pluie, le beau temps. Après le contrôle, la récré. C'est la loi."],
+    ["🥇", "Si la vie était un jeu vidéo, tu serais déjà niveau 15 : « survivre à l'adolescence »."],
+    ["🧠", "Ton cerveau consomme une énorme part de ton énergie. Donne-lui des goûters, il bosse dur."],
+    ["💬", "« On verra demain » : la phrase la plus utilisée de l'histoire des devoirs."],
+    ["👀", "Le trajet dure quelques minutes. Regarde dehors, tu verras sûrement un truc que tu n'avais jamais remarqué."],
+    ["🎵", "Il existe toujours une chanson parfaite pour le trajet. Trouve-la et mets le volume juste assez fort."],
+    ["🤝", "Sourire à quelqu'un aujourd'hui : gratuit, sans abonnement, effet garanti."],
+    ["🐢", "La tortue arrive toujours à destination. Toi aussi, avec ou sans bus."],
+    ["🍩", "Le secret d'une bonne journée : un bon petit-déj, un bon fou rire, et un bon goûter."],
+    ["✨", "Tu es une légende. Ton bus, lui, est juste en retard de deux minutes."],
   ],
 };
 function pickHello() {
@@ -560,24 +614,25 @@ function specialHello(now) {
   const today = dayOnly(now), m = today.getMonth() + 1, d = today.getDate();
   let bday = new Date(today.getFullYear(), 10, 13);
   const toB = nDays(today, bday);
-  if (toB === 0) return ["🎂", "JOYEUX ANNIVERSAIRE MARGAUX ! 🎉 Une année de plus, une année de mieux. Mamie t'embrasse très fort !"];
-  if (toB === 1) return ["🎈", "Demain, c'est ton anniversaire, ma chérie ! Tu as déjà préparé ta plus belle tenue ?"];
-  if (toB > 1 && toB <= 7) return ["🎁", `Plus que ${toB} jours avant ton anniversaire, Margaux ! Mamie compte les dodos avec toi.`];
-  if (toB === -1) return ["🥳", "Bonne première journée de ta nouvelle année, ma Margaux !"];
-  if (m === 12 && d === 24) return ["🎄", "C'est la veille de Noël ! Pense à laisser du lait et des biscuits pour le Père Noël."];
-  if (m === 12 && d === 25) return ["🎅", "Joyeux Noël ma chérie ! Les plus beaux cadeaux sont ceux qui sont autour de la table."];
-  if (m === 12 && d === 31) return ["🥂", "Dernier jour de l'année ! Tu as le droit de veiller un peu, mais pas jusqu'à l'aube."];
-  if (m === 1 && d === 1) return ["🎆", "Bonne année, Margaux ! Que cette année te soit douce et pleine de belles surprises."];
-  if (m === 10 && d === 31) return ["🎃", "Joyeux Halloween ! Attention aux fantômes dans le bus. Ils ne prennent jamais de ticket."];
-  if (m === 4 && d === 1) return ["🐟", "Poisson d'avril ! Ne crois pas tout ce qu'on te dit aujourd'hui, même pas Mamie."];
+  if (toB === 0) return ["🎂", "JOYEUX ANNIVERSAIRE MARGAUX ! 🎉 Aujourd'hui : gâteau, cadeaux et zéro reproche autorisé."];
+  if (toB === 1) return ["🎈", "Demain, c'est ton anniversaire, Margaux ! Prépare ton plus beau sourire (et ta liste de cadeaux)."];
+  if (toB > 1 && toB <= 7) return ["🎁", `Plus que ${toB} jours avant ton anniversaire, Margaux ! Le compte à rebours est lancé.`];
+  if (toB === -1) return ["🥳", "Première journée de ta nouvelle année, Margaux : niveau +1 débloqué !"];
+  if (m === 12 && d === 24) return ["🎄", "Veille de Noël : mission du soir, dormir vite pour que les cadeaux arrivent plus vite (ça marche, paraît-il)."];
+  if (m === 12 && d === 25) return ["🎅", "Joyeux Noël ! Seule contrainte du jour : ne pas s'endormir dans l'assiette."];
+  if (m === 12 && d === 31) return ["🎉", "Dernier jour de l'année ! Résolution officielle : ne plus jamais oublier son chargeur. Tiens trois jours, c'est déjà bien."];
+  if (m === 1 && d === 1) return ["🎆", "Bonne année ! Nouvelle année, nouveaux objectifs, mêmes réveils difficiles."];
+  if (m === 10 && d === 31) return ["🎃", "Joyeux Halloween ! Le vrai monstre du jour : le réveil de 6h30."];
+  if (m === 4 && d === 1) return ["🐟", "Poisson d'avril ! Méfie-toi de tout ce qu'on te dit aujourd'hui, même « il n'y a pas de contrôle »."];
+  if (m === 7 && d === 27) return ["⚔️", `Il y a ${today.getFullYear() - 1214} ans jour pour jour, Philippe Auguste gagnait la bataille de Bouvines (27 juillet 1214). Ton village fait l'Histoire !`];
   if (DATA && DATA.holidays) {
     for (const h of DATA.holidays) {
       const from = parseDay(h.from), to = parseDay(h.to), n = lower1(h.n);
-      if (nDays(today, from) === 1) return ["🎉", `Dernier jour avant les ${n} ! Un petit effort et c'est la liberté !`];
-      if (nDays(today, from) === 0) return ["🏖️", `C'est parti pour les ${n} ! Repose-toi bien, ma chérie.`];
+      if (nDays(today, from) === 1) return ["🎉", `Dernier jour avant les ${n} ! Tiens bon, la liberté est à quelques heures.`];
+      if (nDays(today, from) === 0) return ["🏖️", `C'est parti pour les ${n} ! Le réveil est officiellement en vacances, lui aussi.`];
       if (nDays(today, to) === 0) return /été/i.test(n)
-        ? ["🎒", "C'est la rentrée, ma Margaux ! Nouveau cahier, nouvelle année, nouvelles aventures."]
-        : ["📚", `Reprise après les ${n}. Courage, les prochaines arrivent vite !`];
+        ? ["🎒", "C'est la rentrée ! Nouveau cahier, nouvelle année, mêmes réveils. Tu gères."]
+        : ["📚", `Reprise après les ${n}. Ton cerveau redémarre… chargement : 12 %.`];
     }
   }
   return null;
@@ -687,6 +742,29 @@ const CF_ANALYTICS = {
   s.setAttribute("data-cf-beacon", JSON.stringify({ token }));
   document.head.appendChild(s);
 })();
+
+/* ---------- Infos de la mairie de Bouvines (titres seulement, lien vers PanneauPocket) ---------- */
+function renderMairie() {
+  const tab = $("tab-info");
+  const pp = DATA && DATA.panneau;
+  const ok = u => typeof u === "string" && u.startsWith("https://app.panneaupocket.com/");
+  if (!pp || !ok(pp.url)) { tab.hidden = true; if (view === "info") view = "bus"; return; }
+  tab.hidden = false;
+  $("mairie-all").href = pp.url;
+  const today = dayOnly(new Date());
+  const recent = (pp.posts || []).filter(p => {
+    if (!ok(p.u)) return false;
+    const age = nDays(parseDay(p.d), today);
+    return age <= 14 && age >= -1;                         // moins de 2 semaines
+  });
+  $("mairie-list").innerHTML = recent.length
+    ? recent.map(p => {
+        const [y, m, d] = p.d.split("-");
+        return `<li><a class="post" href="${esc(p.u)}" target="_blank" rel="noopener">${esc(p.t)}</a>` +
+          `${p.j ? '<span class="pado">⭐ ados</span>' : ""}<span class="pdate">${d}/${m}/${y}</span></li>`;
+      }).join("")
+    : `<li class="pnone">Aucune info publiée ces deux dernières semaines.</li>`;
+}
 
 (async function init() {
   try { await loadSchedule(); } catch (e) { $("status").textContent = "horaires indisponibles"; return; }

@@ -6,6 +6,7 @@ Usage : python build_data.py
 Sans dépendance externe (bibliothèque standard uniquement).
 """
 import csv
+import html
 import io
 import re
 import json
@@ -182,6 +183,62 @@ def flexity_data(first_day):
         "services": services,
     }
 
+
+# ---------------------------------------------------------------------------
+# Infos de la mairie de Bouvines (page publique PanneauPocket).
+# On ne garde que le titre, la date et le lien de chaque publication : le texte et les
+# images restent chez PanneauPocket (lien « Lire »). Si la page change ou est
+# inaccessible, on renvoie None : le reste des horaires n'est pas affecté.
+PANNEAU_URL = "https://app.panneaupocket.com/ville/16409907-bouvines-59830"
+PANNEAU_MAX_AGE_DAYS = 14   # on n'affiche que les infos de moins de 2 semaines
+PANNEAU_MAX_POSTS = 6
+TEEN_WORDS = re.compile(r"\b(ados?|jeunes?|jeunesse|coll[eè]ge|lyc[eé]e|BG)\b", re.I)
+
+
+def panneaupocket_posts(today):
+    try:
+        req = urllib.request.Request(PANNEAU_URL, headers={"User-Agent": "bus-4cantons/1.0 (appli de bus, 1 requete/jour)"})
+        with urllib.request.urlopen(req, timeout=45) as r:
+            page = r.read().decode("utf-8", errors="replace")
+    except Exception as e:
+        print("PanneauPocket indisponible :", e, file=sys.stderr)
+        return None
+
+    posts = []
+    seen = 0   # publications reconnues sur la page, tous âges confondus (0 = la page a changé de structure)
+    parts = re.split(r'<div class="sign-carousel--item[^"]*"\s+data-id="\d+"', page)[1:]
+    for chunk in parts:
+        m_title = re.search(r'<div class="title">\s*(.*?)\s*</div>', chunk, re.S)
+        m_date = re.search(r"Info\s+(publi[ée]e|modifi[ée]e)\s+le\s+(\d{2})/(\d{2})/(\d{4})", chunk)
+        if not m_title or not m_date:
+            continue
+        title = html.unescape(re.sub(r"<[^>]+>", "", m_title.group(1)))
+        title = re.sub(r"\s+", " ", title).strip()
+        try:
+            d = date(int(m_date.group(4)), int(m_date.group(3)), int(m_date.group(2)))
+        except ValueError:
+            continue
+        if not title:
+            continue
+        seen += 1
+        if (today - d).days > PANNEAU_MAX_AGE_DAYS or d > today + timedelta(days=1):
+            continue
+        ids = re.findall(r"panneau=(\d+)", chunk)
+        pid = max(set(ids), key=ids.count) if ids else None   # l'identifiant répété dans le bloc est celui de la publication
+        posts.append({
+            "t": title[:140],
+            "d": d.isoformat(),
+            "u": PANNEAU_URL + ("?panneau=" + pid if pid else ""),
+            "j": bool(TEEN_WORDS.search(title)),
+        })
+    if seen == 0:      # rien de reconnu : la page a sans doute changé, on n'affiche rien plutôt que des erreurs
+        print("PanneauPocket : aucune publication reconnue (structure de la page modifiée ?)", file=sys.stderr)
+        return None
+    posts.sort(key=lambda p: p["d"], reverse=True)   # liste éventuellement vide : « aucune info récente »
+    return {"url": PANNEAU_URL, "posts": posts[:PANNEAU_MAX_POSTS],
+            "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds")}
+
+
 def main():
     print("Téléchargement du GTFS régional…", file=sys.stderr)
     req = urllib.request.Request(GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
@@ -258,6 +315,7 @@ def main():
         "services": services,
         "holidays": school_holidays(date.today()),
         "flexity": flexity_data(date.today() - timedelta(days=2)),
+        "panneau": panneaupocket_posts(date.today()),
     }
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(out, f, ensure_ascii=False, separators=(",", ":"))
