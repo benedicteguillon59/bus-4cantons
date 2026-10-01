@@ -299,7 +299,7 @@
 
 <script>
 "use strict";
-const MAX_ITEMS = 8;
+const MAX_ITEMS = 40;   // large : on affiche tous les bus à venir dans la journée, pas seulement les tout prochains
 const $ = id => document.getElementById(id);
 
 let DATA = null;            // horaires (data.json)
@@ -363,6 +363,8 @@ const ymd = d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate(
 const at = (day, secs) => new Date(day.getFullYear(), day.getMonth(), day.getDate(), 0, 0, secs).getTime();
 
 function upcoming(now) {
+  // Tous les départs à venir (jamais les bus déjà passés), en cherchant au besoin sur les
+  // jours suivants si la journée en cours n'en a plus.
   const out = [];
   const list = DATA.items[dir];
   for (let off = -1; off <= 8; off++) {           // veille (courses après minuit) jusqu'à 8 jours plus tard
