@@ -9,6 +9,7 @@ import csv
 import html
 import io
 import re
+import struct
 import json
 import sys
 import time
@@ -201,7 +202,9 @@ def flexity_data(first_day):
 # inaccessible, on renvoie None : le reste des horaires n'est pas affecté.
 PANNEAU_URL = "https://app.panneaupocket.com/ville/16409907-bouvines-59830"
 PANNEAU_MAX_AGE_DAYS = 14   # on n'affiche que les infos de moins de 2 semaines
-PANNEAU_MAX_POSTS = 6
+PANNEAU_MAX_POSTS = 8
+PANNEAU_EVENT_PAST_DAYS = 2     # un événement terminé depuis moins de 2 jours reste affiché
+PANNEAU_EVENT_AHEAD_DAYS = 60   # on annonce les événements des 2 prochains mois
 TEEN_WORDS = re.compile(r"\b(ados?|jeunes?|jeunesse|coll[eè]ge|lyc[eé]e|BG)\b", re.I)
 
 
@@ -219,35 +222,52 @@ def panneaupocket_posts(today):
     parts = re.split(r'<div class="sign-carousel--item[^"]*"\s+data-id="\d+"', page)[1:]
     for chunk in parts:
         m_title = re.search(r'<div class="title">\s*(.*?)\s*</div>', chunk, re.S)
-        m_date = re.search(r"Info\s+(publi[ée]e|modifi[ée]e)\s+le\s+(\d{2})/(\d{2})/(\d{4})", chunk)
-        if not m_title or not m_date:
+        m_span = re.search(r'<span class="date">\s*(.*?)\s*</span>', chunk, re.S)
+        if not m_title or not m_span:
             continue
+        dtxt = html.unescape(re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", m_span.group(1)))).strip()
         title = html.unescape(re.sub(r"<[^>]+>", "", m_title.group(1)))
         title = re.sub(r"\s+", " ", title).strip()
-        try:
-            d = date(int(m_date.group(4)), int(m_date.group(3)), int(m_date.group(2)))
-        except ValueError:
-            continue
         if not title:
-            continue
-        seen += 1
-        if (today - d).days > PANNEAU_MAX_AGE_DAYS or d > today + timedelta(days=1):
             continue
         ids = re.findall(r"panneau=(\d+)", chunk)
         pid = max(set(ids), key=ids.count) if ids else None   # l'identifiant répété dans le bloc est celui de la publication
-        posts.append({
+        post = {
             "t": title[:140],
-            "d": d.isoformat(),
             "u": PANNEAU_URL + ("?panneau=" + pid if pid else ""),
             "j": bool(TEEN_WORDS.search(title)),
-        })
+        }
+        try:
+            m_pub = re.search(r"Info\s+(publi[ée]e|modifi[ée]e)\s+le\s+(\d{2})/(\d{2})/(\d{4})", dtxt)
+            m_ev = re.search(r"(?:Le|Du)\s+(\d{2})/(\d{2})/(\d{4})(?:\s+au\s+(\d{2})/(\d{2})/(\d{4}))?", dtxt)
+            if m_pub:                                          # information publiée / modifiée à une date
+                d = date(int(m_pub.group(4)), int(m_pub.group(3)), int(m_pub.group(2)))
+                seen += 1
+                if (today - d).days > PANNEAU_MAX_AGE_DAYS or d > today + timedelta(days=1):
+                    continue
+                post["d"] = d.isoformat()
+            elif m_ev:                                         # événement : « Le 14/10/2026 » ou « Du … au … »
+                d1 = date(int(m_ev.group(3)), int(m_ev.group(2)), int(m_ev.group(1)))
+                d2 = date(int(m_ev.group(6)), int(m_ev.group(5)), int(m_ev.group(4))) if m_ev.group(4) else d1
+                seen += 1
+                if d2 < today - timedelta(days=PANNEAU_EVENT_PAST_DAYS) or d1 > today + timedelta(days=PANNEAU_EVENT_AHEAD_DAYS):
+                    continue
+                post["d"] = d1.isoformat()
+                post["d2"] = d2.isoformat()
+                post["ev"] = dtxt
+            else:
+                continue
+        except ValueError:
+            continue
+        posts.append(post)
     if seen == 0:      # rien de reconnu : la page a sans doute changé, on n'affiche rien plutôt que des erreurs
         print("PanneauPocket : aucune publication reconnue (structure de la page modifiée ?)", file=sys.stderr)
         return None
-    posts.sort(key=lambda p: p["d"], reverse=True)   # liste éventuellement vide : « aucune info récente »
-    return {"url": PANNEAU_URL, "posts": posts[:PANNEAU_MAX_POSTS],
+    # d'abord les événements à venir (le plus proche en premier), puis les informations récentes
+    events = sorted([p for p in posts if "ev" in p], key=lambda p: p["d"])
+    news = sorted([p for p in posts if "ev" not in p], key=lambda p: p["d"], reverse=True)
+    return {"url": PANNEAU_URL, "posts": (events + news)[:PANNEAU_MAX_POSTS],
             "fetched": datetime.now(timezone.utc).isoformat(timespec="seconds")}
-
 
 
 def previous_section(key):
@@ -259,11 +279,62 @@ def previous_section(key):
         return None
 
 
+def repair_zip(raw):
+    """Réparation d'un zip qui contient plusieurs marqueurs de fin (EOCD) : défaut constaté sur le
+    GTFS de la Région le 8 octobre 2026, avec un marqueur correct suivi de quelques octets parasites
+    puis d'un second marqueur erroné, que zipfile lit en premier. On essaie chaque marqueur, du
+    dernier au premier, en coupant le fichier juste après lui ; zipfile revérifie toute la
+    structure, et on contrôle ensuite les CRC de tous les fichiers (testzip)."""
+    last = None
+    ends = [m.start() for m in re.finditer(b"PK", raw)]
+    for pos in reversed(ends):
+        if pos + 22 > len(raw):
+            continue
+        clen = struct.unpack_from("<H", raw, pos + 20)[0]              # longueur du commentaire de fin
+        try:
+            z = zipfile.ZipFile(io.BytesIO(raw[:pos + 22 + clen]))
+            bad = z.testzip()
+            if bad is None:
+                return z
+            last = f"fichier corrompu : {bad}"
+        except Exception as e:
+            last = e
+    raise zipfile.BadZipFile(f"zip irréparable ({last})")
+
+
+def open_gtfs(url, label):
+    """Télécharge un GTFS (3 essais) et l'ouvre, en réparant le zip si besoin. Lève une
+    exception explicite (avec le nom de la source) si tout échoue."""
+    last = None
+    for attempt in range(1, 4):
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "bus-4cantons/1.0"})
+            with urllib.request.urlopen(req, timeout=180) as r:
+                raw = r.read()
+            try:
+                return zipfile.ZipFile(io.BytesIO(raw))
+            except zipfile.BadZipFile as e:
+                print(f"{label} : zip illisible ({e}), tentative de réparation…", file=sys.stderr)
+                z = repair_zip(raw)
+                print(f"{label} : zip réparé avec succès", file=sys.stderr)
+                return z
+        except Exception as e:
+            last = e
+            print(f"{label} : essai {attempt}/3 échoué : {e}", file=sys.stderr)
+            time.sleep(5 * attempt)
+    raise RuntimeError(f"{label} : téléchargement ou lecture impossible ({last})")
+
+
 def main():
     print("Téléchargement du GTFS régional…", file=sys.stderr)
-    req = urllib.request.Request(GTFS_URL, headers={"User-Agent": "bus-4cantons/1.0"})
-    with urllib.request.urlopen(req, timeout=180) as r:
-        z = zipfile.ZipFile(io.BytesIO(r.read()))
+    try:
+        z = open_gtfs(GTFS_URL, "GTFS régional")
+    except Exception as e:
+        # Source principale indisponible : on garde le data.json précédent (l'appli continue de
+        # fonctionner avec les derniers horaires connus) et on signale le problème dans GitHub.
+        print(f"::warning title=Horaires non mis à jour::{e}", file=sys.stderr)
+        print("data.json précédent conservé.", file=sys.stderr)
+        return
 
     place_of = {s: p for p, v in PLACES.items() for s in v["stops"]}
     watch = set(place_of) | CQ_STOPS

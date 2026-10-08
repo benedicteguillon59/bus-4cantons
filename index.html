@@ -877,16 +877,21 @@ function renderMairie() {
   const today = dayOnly(new Date());
   const recent = (pp.posts || []).filter(p => {
     if (!ok(p.u)) return false;
+    if (p.ev) {                                            // événement : à venir (ou fini depuis moins de 2 jours)
+      const end = nDays(today, parseDay(p.d2 || p.d)), start = nDays(today, parseDay(p.d));
+      return end >= -2 && start <= 60;
+    }
     const age = nDays(parseDay(p.d), today);
-    return age <= 14 && age >= -1;                         // moins de 2 semaines
+    return age <= 14 && age >= -1;                         // information publiée il y a moins de 2 semaines
   });
   $("mairie-list").innerHTML = recent.length
     ? recent.map(p => {
         const [y, m, d] = p.d.split("-");
         return `<li><a class="post" href="${esc(p.u)}" target="_blank" rel="noopener">${esc(p.t)}</a>` +
-          `${p.j ? '<span class="pado">⭐ ados</span>' : ""}<span class="pdate">${d}/${m}/${y}</span></li>`;
+          `${p.j ? '<span class="pado">⭐ ados</span>' : ""}` +
+          `<span class="pdate">${p.ev ? "📅 " + esc(p.ev) : d + "/" + m + "/" + y}</span></li>`;
       }).join("")
-    : `<li class="pnone">Aucune info publiée ces deux dernières semaines.</li>`;
+    : `<li class="pnone">Aucune info récente ni événement à venir.</li>`;
 }
 
 /* ---------- Météo à Bouvines (Open-Meteo : sans clé, sans cookie ; coordonnées fixes du village) ---------- */
